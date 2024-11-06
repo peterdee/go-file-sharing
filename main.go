@@ -7,6 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"file-exchange/cache"
 	"file-exchange/constants"
 	"file-exchange/handlers"
 	"file-exchange/utilities"
@@ -18,8 +19,12 @@ func main() {
 		log.Fatal(envError)
 	}
 
-	http.HandleFunc("GET /api/x", handlers.IndexHandler)
-	http.HandleFunc("GET /api/", handlers.IndexHandler)
+	cache.Connect()
+
+	http.HandleFunc("GET /api", handlers.IndexHandler)
+	http.HandleFunc("GET /api/download", handlers.DownloadHandler)
+	http.HandleFunc("GET /api/info", handlers.InfoHandler)
+	http.HandleFunc("POST /api/upload", handlers.UploadHandler)
 
 	port := utilities.GetEnv(constants.ENV_NAMES.Port, constants.DEFAULT_PORT)
 	listener, listenError := net.Listen("tcp", ":"+port)
@@ -27,7 +32,7 @@ func main() {
 		log.Fatal(listenError)
 	}
 
-	log.Printf("Running the server on port %s", port)
+	log.Printf("Server is running on port %s", port)
 
 	if serveError := http.Serve(listener, nil); serveError != nil {
 		log.Fatal(serveError)
