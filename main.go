@@ -9,6 +9,7 @@ import (
 
 	"file-exchange/cache"
 	"file-exchange/constants"
+	"file-exchange/database"
 	"file-exchange/handlers"
 	"file-exchange/utilities"
 )
@@ -20,10 +21,12 @@ func main() {
 	}
 
 	cache.Connect()
+	database.Connect()
 
+	http.HandleFunc("GET /", handlers.IndexHandler)
 	http.HandleFunc("GET /api", handlers.IndexHandler)
-	http.HandleFunc("GET /api/download", handlers.DownloadHandler)
-	http.HandleFunc("GET /api/info", handlers.InfoHandler)
+	http.HandleFunc("GET /api/download/{id}", handlers.DownloadHandler)
+	http.HandleFunc("GET /api/info/{id}", handlers.InfoHandler)
 	http.HandleFunc("POST /api/upload", handlers.UploadHandler)
 
 	port := utilities.GetEnv(constants.ENV_NAMES.Port, constants.DEFAULT_PORT)

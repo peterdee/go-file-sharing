@@ -1,9 +1,11 @@
 package constants
 
 type EnvNames struct {
-	Port          string
-	RedisHost     string
-	RedisPassword string
+	DatabaseConnectionString string
+	DatabaseName             string
+	Port                     string
+	RedisHost                string
+	RedisPassword            string
 }
 
 type ResponseInfo struct {

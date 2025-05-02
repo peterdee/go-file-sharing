@@ -36,7 +36,7 @@ func Connect() {
 			log.Fatal(pingError)
 		}
 
-		log.Printf("Redis connection failed, repeating in %d seconds", i)
+		log.Printf("Redis connection failed, retry in %d seconds", i)
 		time.Sleep(time.Duration(i) * time.Second)
 	}
 

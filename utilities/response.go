@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"file-exchange/constants"
 )
 
 type ResponseParams struct {
-	Data     interface{}
+	Data     any
 	Info     string
 	Request  *http.Request
 	Response http.ResponseWriter
@@ -17,10 +18,11 @@ type ResponseParams struct {
 }
 
 type responseObject struct {
-	Data    interface{} `json:"data,omitempty"`
-	Info    string      `json:"info"`
-	Request string      `json:"request"`
-	Status  int         `json:"status"`
+	Data     any    `json:"data,omitempty"`
+	Datetime int64  `json:"datetime"`
+	Info     string `json:"info"`
+	Request  string `json:"request"`
+	Status   int    `json:"status"`
 }
 
 func Response(params ResponseParams) {
@@ -35,9 +37,10 @@ func Response(params ResponseParams) {
 	}
 
 	responseObject := responseObject{
-		Info:    info,
-		Request: fmt.Sprintf("%s [%s]", params.Request.RequestURI, params.Request.Method),
-		Status:  status,
+		Datetime: time.Now().UnixMilli(),
+		Info:     info,
+		Request:  fmt.Sprintf("%s [%s]", params.Request.RequestURI, params.Request.Method),
+		Status:   status,
 	}
 	if params.Data != nil {
 		responseObject.Data = params.Data
