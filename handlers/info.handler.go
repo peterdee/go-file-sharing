@@ -1,16 +1,22 @@
 package handlers
 
 import (
-	"fmt"
+	"context"
 	"net/http"
 
+	"file-exchange/database"
 	"file-exchange/utilities"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
-	fmt.Println("info handler", id)
+	result := database.FilesCollection.FindOne(
+		context.Background(),
+		bson.D{{Key: "UID", Value: id}},
+	)
 
 	/*
 		1. Get database record by ID
@@ -19,6 +25,7 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	*/
 
 	utilities.Response(utilities.ResponseParams{
+		Data:     result,
 		Request:  request,
 		Response: response,
 	})

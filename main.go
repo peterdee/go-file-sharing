@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 
@@ -18,6 +19,10 @@ func main() {
 	envError := godotenv.Load()
 	if envError != nil {
 		log.Fatal(envError)
+	}
+
+	if _, uploadsError := os.Stat("uploads"); os.IsNotExist(uploadsError) {
+		os.Mkdir("uploads", 0755)
 	}
 
 	cache.Connect()
