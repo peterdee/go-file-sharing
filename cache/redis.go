@@ -7,8 +7,8 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"file-exchange/constants"
-	"file-exchange/utilities"
+	"file-sharing/constants"
+	"file-sharing/utilities"
 )
 
 var Client *redis.Client

@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 
-	"file-exchange/constants"
-	"file-exchange/utilities"
+	"file-sharing/constants"
+	"file-sharing/utilities"
 )
 
 const FILES_COLLECTION_NAME string = "files"

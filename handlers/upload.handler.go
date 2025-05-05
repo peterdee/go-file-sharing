@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"file-exchange/constants"
-	"file-exchange/database"
-	"file-exchange/utilities"
+	"file-sharing/constants"
+	"file-sharing/database"
+	"file-sharing/utilities"
 
 	"github.com/julyskies/gohelpers"
 	"github.com/nrednav/cuid2"
@@ -28,7 +28,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 	defer file.Close()
 
 	uid := cuid2.Generate()
-	fileRecord := &database.File{
+	fileRecord := database.File{
 		CreatedAt:    gohelpers.MakeTimestampSeconds(),
 		Downloads:    0,
 		OriginalName: handler.Filename,
@@ -74,7 +74,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 
 	utilities.Response(utilities.ResponseParams{
 		Data: map[string]string{
-			"fileId": uid,
+			"id": uid,
 		},
 		Request:  request,
 		Response: response,

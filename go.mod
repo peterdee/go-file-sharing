@@ -1,4 +1,4 @@
-module file-exchange
+module file-sharing
 
 go 1.24.0
 

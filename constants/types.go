@@ -10,5 +10,6 @@ type EnvNames struct {
 
 type ResponseInfo struct {
 	InternalServerError string
+	NotFound            string
 	Ok                  string
 }

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"file-exchange/constants"
+	"file-sharing/constants"
 )
 
 type ResponseParams struct {

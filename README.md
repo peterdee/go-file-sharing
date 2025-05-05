@@ -1,4 +1,4 @@
-## go-file-exchange
+## go-file-sharing
 
 ### Launch
 

@@ -8,11 +8,11 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"file-exchange/cache"
-	"file-exchange/constants"
-	"file-exchange/database"
-	"file-exchange/handlers"
-	"file-exchange/utilities"
+	"file-sharing/cache"
+	"file-sharing/constants"
+	"file-sharing/database"
+	"file-sharing/handlers"
+	"file-sharing/utilities"
 )
 
 func main() {
