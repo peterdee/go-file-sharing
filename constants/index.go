@@ -6,12 +6,15 @@ const DEFAULT_PORT string = "9090"
 
 const DEFAULT_REDIS_HOST string = "localhost:6379"
 
+const DEFAULT_UPLOADS_DIRECTORY_NAME string = "uploads"
+
 var ENV_NAMES = EnvNames{
 	DatabaseConnectionString: "DATABASE_CONNECTION_STRING",
 	DatabaseName:             "DATABASE_NAME",
 	Port:                     "PORT",
 	RedisHost:                "REDIS_HOST",
 	RedisPassword:            "REDIS_PASSWORD",
+	UplaodsDirectoryName:     "UPLOADS_DIRECTORY_NAME",
 }
 
 var RESPONSE_INFO = ResponseInfo{

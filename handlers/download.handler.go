@@ -19,6 +19,8 @@ import (
 func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
+	// TODO: check cache first
+
 	var record database.File
 	queryError := database.FilesCollection.FindOne(
 		context.Background(),
@@ -43,9 +45,19 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	file, fileError := os.Open(filepath.Join("uploads", record.UID))
+	// TODO: write to cache to prevent additional DB calls
+
+	uploadsDirectoryName := utilities.GetEnv(
+		constants.ENV_NAMES.UplaodsDirectoryName,
+		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
+	)
+	file, fileError := os.Open(filepath.Join(uploadsDirectoryName, record.UID))
 	if fileError != nil {
 		if errors.Is(fileError, os.ErrNotExist) {
+			database.FilesCollection.DeleteOne(
+				context.Background(),
+				bson.D{{Key: "uid", Value: id}},
+			)
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,
@@ -68,5 +80,5 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 		"Content-Disposition",
 		fmt.Sprintf("attachment; filename=%s", record.OriginalName),
 	)
-	http.ServeFile(response, request, filepath.Join("uploads", record.UID))
+	http.ServeFile(response, request, filepath.Join(uploadsDirectoryName, record.UID))
 }

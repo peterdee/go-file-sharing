@@ -16,6 +16,8 @@ import (
 func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
+	// TODO: check cache first
+
 	var record database.File
 	queryError := database.FilesCollection.FindOne(
 		context.Background(),
@@ -39,6 +41,8 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 		})
 		return
 	}
+
+	// TODO: write to cache to prevent additional DB calls
 
 	utilities.Response(utilities.ResponseParams{
 		Data:     record,

@@ -36,7 +36,11 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		UID:          uid,
 	}
 
-	destination, fileError := os.Create(filepath.Join("uploads", uid))
+	uploadsDirectoryName := utilities.GetEnv(
+		constants.ENV_NAMES.UplaodsDirectoryName,
+		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
+	)
+	destination, fileError := os.Create(filepath.Join(uploadsDirectoryName, uid))
 	if fileError != nil {
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,

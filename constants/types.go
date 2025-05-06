@@ -6,6 +6,7 @@ type EnvNames struct {
 	Port                     string
 	RedisHost                string
 	RedisPassword            string
+	UplaodsDirectoryName     string
 }
 
 type ResponseInfo struct {

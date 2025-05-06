@@ -21,8 +21,15 @@ func main() {
 		log.Fatal(envError)
 	}
 
-	if _, uploadsError := os.Stat("uploads"); os.IsNotExist(uploadsError) {
-		os.Mkdir("uploads", 0755)
+	uploadsDirectoryName := utilities.GetEnv(
+		constants.ENV_NAMES.UplaodsDirectoryName,
+		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
+	)
+	if _, uploadsError := os.Stat(uploadsDirectoryName); os.IsNotExist(uploadsError) {
+		fsError := os.Mkdir(uploadsDirectoryName, 0755)
+		if fsError != nil {
+			log.Fatal(fsError)
+		}
 	}
 
 	cache.Connect()
