@@ -19,41 +19,52 @@ import (
 func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
-	// TODO: check cache first
-
-	var record database.File
-	queryError := database.FilesCollection.FindOne(
-		context.Background(),
-		bson.D{{Key: "uid", Value: id}},
-	).Decode(&record)
-	if queryError != nil {
-		if errors.Is(queryError, mongo.ErrNoDocuments) {
+	cachedRecord, cacheError := getCachedRecord(id)
+	if cacheError != nil || cachedRecord == nil {
+		var record database.File
+		queryError := database.FilesCollection.FindOne(
+			context.Background(),
+			bson.D{{Key: "uid", Value: id}},
+		).Decode(&record)
+		if queryError != nil {
+			if errors.Is(queryError, mongo.ErrNoDocuments) {
+				utilities.Response(utilities.ResponseParams{
+					Info:     constants.RESPONSE_INFO.NotFound,
+					Request:  request,
+					Response: response,
+					Status:   http.StatusNotFound,
+				})
+				return
+			}
 			utilities.Response(utilities.ResponseParams{
-				Info:     constants.RESPONSE_INFO.NotFound,
+				Info:     constants.RESPONSE_INFO.InternalServerError,
 				Request:  request,
 				Response: response,
-				Status:   http.StatusNotFound,
+				Status:   http.StatusInternalServerError,
 			})
 			return
 		}
-		utilities.Response(utilities.ResponseParams{
-			Info:     constants.RESPONSE_INFO.InternalServerError,
-			Request:  request,
-			Response: response,
-			Status:   http.StatusInternalServerError,
-		})
-		return
+		cacheError = setCacheValue(record.UID, &record)
+		if cacheError != nil {
+			utilities.Response(utilities.ResponseParams{
+				Info:     constants.RESPONSE_INFO.InternalServerError,
+				Request:  request,
+				Response: response,
+				Status:   http.StatusInternalServerError,
+			})
+			return
+		}
+		cachedRecord = &record
 	}
-
-	// TODO: write to cache to prevent additional DB calls
 
 	uploadsDirectoryName := utilities.GetEnv(
 		constants.ENV_NAMES.UplaodsDirectoryName,
 		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
 	)
-	file, fileError := os.Open(filepath.Join(uploadsDirectoryName, record.UID))
+	file, fileError := os.Open(filepath.Join(uploadsDirectoryName, cachedRecord.UID))
 	if fileError != nil {
 		if errors.Is(fileError, os.ErrNotExist) {
+			deleteCachedRecord(cachedRecord.UID)
 			database.FilesCollection.DeleteOne(
 				context.Background(),
 				bson.D{{Key: "uid", Value: id}},
@@ -78,7 +89,7 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 
 	response.Header().Set(
 		"Content-Disposition",
-		fmt.Sprintf("attachment; filename=%s", record.OriginalName),
+		fmt.Sprintf("attachment; filename=%s", cachedRecord.OriginalName),
 	)
-	http.ServeFile(response, request, filepath.Join(uploadsDirectoryName, record.UID))
+	http.ServeFile(response, request, filepath.Join(uploadsDirectoryName, cachedRecord.UID))
 }
