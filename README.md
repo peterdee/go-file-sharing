@@ -12,7 +12,7 @@ Stack:
 
 Features:
 
-- upload files (no file size cap)
+- upload files (file size cap is set via environment variable)
 
 - get file info via file ID
 
@@ -33,6 +33,8 @@ go mod download
 ### Environment variables
 
 The `.env` file is required, see [.env.example](./.env.example) for details
+
+Setting `MAX_FILE_SIZE_BYTES` variable to `0` disables file size cap 
 
 ### Launch
 

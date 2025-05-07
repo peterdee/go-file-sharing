@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"file-sharing/constants"
 	"file-sharing/database"
@@ -25,6 +26,23 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		})
 		return
 	}
+
+	// no size restrictions if MAX_FILE_SIZE_BYTES is set to 0 or is not set at all
+	maxFileSizeBytes := utilities.GetEnv(constants.ENV_NAMES.MaxFileSizeBytes)
+	if maxFileSizeBytes != "" && maxFileSizeBytes != "0" {
+		size, converterError := strconv.Atoi(maxFileSizeBytes)
+		// if value is not an int consider that there are no restrictions
+		if converterError == nil && handler.Size > int64(size) {
+			utilities.Response(utilities.ResponseParams{
+				Info:     constants.RESPONSE_INFO.RequestEntityTooLarge,
+				Request:  request,
+				Response: response,
+				Status:   http.StatusRequestEntityTooLarge,
+			})
+			return
+		}
+	}
+
 	defer file.Close()
 
 	uid := cuid2.Generate()

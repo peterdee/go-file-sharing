@@ -3,6 +3,7 @@ package constants
 type EnvNames struct {
 	DatabaseConnectionString string
 	DatabaseName             string
+	MaxFileSizeBytes         string
 	Port                     string
 	RedisHost                string
 	RedisPassword            string
@@ -10,7 +11,8 @@ type EnvNames struct {
 }
 
 type ResponseInfo struct {
-	InternalServerError string
-	NotFound            string
-	Ok                  string
+	InternalServerError   string
+	NotFound              string
+	Ok                    string
+	RequestEntityTooLarge string
 }
