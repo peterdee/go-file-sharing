@@ -21,7 +21,7 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 
 	cachedRecord, cacheError := getCachedRecord(id)
 	if cacheError != nil || cachedRecord == nil {
-		var record database.File
+		var record database.Files
 		queryError := database.FilesCollection.FindOne(
 			context.Background(),
 			bson.D{{Key: "uid", Value: id}},

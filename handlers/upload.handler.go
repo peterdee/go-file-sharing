@@ -45,13 +45,19 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 
 	defer file.Close()
 
+	timestamp := gohelpers.MakeTimestampSeconds()
 	uid := cuid2.Generate()
-	fileRecord := database.File{
-		CreatedAt:    gohelpers.MakeTimestampSeconds(),
-		Downloads:    0,
+	filesRecord := database.Files{
+		CreatedAt:    timestamp,
 		OriginalName: handler.Filename,
 		Size:         handler.Size,
 		UID:          uid,
+	}
+	metricsRecord := database.Metrics{
+		CreatedAt: timestamp,
+		Downloads: 0,
+		UID:       uid,
+		Views:     0,
 	}
 
 	uploadsDirectoryName := utilities.GetEnv(
@@ -82,7 +88,20 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 
 	_, insertError := database.FilesCollection.InsertOne(
 		context.Background(),
-		fileRecord,
+		filesRecord,
+	)
+	if insertError != nil {
+		utilities.Response(utilities.ResponseParams{
+			Info:     constants.RESPONSE_INFO.InternalServerError,
+			Request:  request,
+			Response: response,
+			Status:   http.StatusInternalServerError,
+		})
+		return
+	}
+	_, insertError = database.MetricsCollection.InsertOne(
+		context.Background(),
+		metricsRecord,
 	)
 	if insertError != nil {
 		utilities.Response(utilities.ResponseParams{

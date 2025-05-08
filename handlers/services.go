@@ -18,8 +18,8 @@ func deleteCachedRecord(key string) error {
 	).Err()
 }
 
-func getCachedRecord(key string) (*database.File, error) {
-	var record database.File
+func getCachedRecord(key string) (*database.Files, error) {
+	var record database.Files
 	cachedValue, cacheError := cache.Client.Get(context.Background(), key).Result()
 	if cacheError != nil {
 		if cacheError == redis.Nil {
@@ -34,14 +34,14 @@ func getCachedRecord(key string) (*database.File, error) {
 	return &record, nil
 }
 
-func setCacheValue(key string, value *database.File) error {
+func setCacheValue(key string, value *database.Files) error {
 	stringValue, encodeError := json.Marshal(&value)
 	if encodeError != nil {
 		return encodeError
 	}
 	cache.Client.Set(
 		context.Background(),
-		value.UID,
+		key,
 		stringValue,
 		time.Duration(time.Hour)*8,
 	)
