@@ -16,45 +16,62 @@ import (
 func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
-	cachedRecord, cacheError := getCachedRecord(id)
-	if cacheError != nil || cachedRecord == nil {
-		var record database.Files
-		queryError := database.FilesCollection.FindOne(
-			context.Background(),
-			bson.D{{Key: "uid", Value: id}},
-		).Decode(&record)
-		if queryError != nil {
-			if errors.Is(queryError, mongo.ErrNoDocuments) {
-				utilities.Response(utilities.ResponseParams{
-					Info:     constants.RESPONSE_INFO.NotFound,
-					Request:  request,
-					Response: response,
-					Status:   http.StatusNotFound,
-				})
-				return
-			}
+	var filesRecord database.Files
+	queryError := database.FilesCollection.FindOne(
+		context.Background(),
+		bson.M{"uid": id},
+	).Decode(&filesRecord)
+	if queryError != nil {
+		if errors.Is(queryError, mongo.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
-				Info:     constants.RESPONSE_INFO.InternalServerError,
+				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,
 				Response: response,
-				Status:   http.StatusInternalServerError,
+				Status:   http.StatusNotFound,
 			})
 			return
 		}
-		cacheError = setCacheValue(record.UID, &record)
-		if cacheError != nil {
-			utilities.Response(utilities.ResponseParams{
-				Info:     constants.RESPONSE_INFO.InternalServerError,
-				Request:  request,
-				Response: response,
-				Status:   http.StatusInternalServerError,
-			})
-			return
-		}
-		cachedRecord = &record
+		utilities.Response(utilities.ResponseParams{
+			Info:     constants.RESPONSE_INFO.InternalServerError,
+			Request:  request,
+			Response: response,
+			Status:   http.StatusInternalServerError,
+		})
+		return
 	}
+
+	var metricsRecord database.Metrics
+	queryError = database.MetricsCollection.FindOneAndUpdate(
+		context.Background(),
+		bson.M{"uid": id},
+		bson.M{"$inc": bson.M{"views": 1}},
+	).Decode(&metricsRecord)
+	if queryError != nil {
+		if errors.Is(queryError, mongo.ErrNoDocuments) {
+			utilities.Response(utilities.ResponseParams{
+				Info:     constants.RESPONSE_INFO.NotFound,
+				Request:  request,
+				Response: response,
+				Status:   http.StatusNotFound,
+			})
+			return
+		}
+		utilities.Response(utilities.ResponseParams{
+			Info:     constants.RESPONSE_INFO.InternalServerError,
+			Request:  request,
+			Response: response,
+			Status:   http.StatusInternalServerError,
+		})
+		return
+	}
+
+	metricsRecord.Views += 1
+
 	utilities.Response(utilities.ResponseParams{
-		Data:     cachedRecord,
+		Data: map[string]any{
+			"file":  filesRecord,
+			"stats": metricsRecord,
+		},
 		Request:  request,
 		Response: response,
 	})
