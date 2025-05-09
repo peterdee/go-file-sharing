@@ -12,6 +12,7 @@ import (
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/handlers"
+	scheduledtasks "file-sharing/scheduled-tasks"
 	"file-sharing/utilities"
 )
 
@@ -34,6 +35,8 @@ func main() {
 
 	cache.Connect()
 	database.Connect()
+
+	scheduledtasks.RemoveRecords()
 
 	http.HandleFunc("GET /", handlers.IndexHandler)
 	http.HandleFunc("GET /api", handlers.IndexHandler)
