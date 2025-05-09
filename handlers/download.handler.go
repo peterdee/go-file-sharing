@@ -2,15 +2,18 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
+	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/utilities"
@@ -19,15 +22,34 @@ import (
 func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
-	cachedRecord, cacheError := getCachedRecord(id)
-	if cacheError != nil || cachedRecord == nil {
-		var record database.Files
+	uploadsDirectoryName := utilities.GetEnv(
+		constants.ENV_NAMES.UplaodsDirectoryName,
+		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
+	)
+	path := filepath.Join(uploadsDirectoryName, id)
+
+	var filesRecord database.Files
+
+	cachedFilesRecord, cacheError := cache.Client.Get(
+		context.Background(),
+		id,
+	).Result()
+	if cacheError == nil {
+		cacheError = json.Unmarshal([]byte(cachedFilesRecord), &filesRecord)
+	}
+
+	if cacheError != nil {
 		queryError := database.FilesCollection.FindOne(
 			context.Background(),
-			bson.D{{Key: "uid", Value: id}},
-		).Decode(&record)
+			bson.M{"uid": id},
+		).Decode(&filesRecord)
 		if queryError != nil {
 			if errors.Is(queryError, mongo.ErrNoDocuments) {
+				database.MetricsCollection.DeleteOne(
+					context.Background(),
+					bson.D{{Key: "uid", Value: id}},
+				)
+				os.Remove(path)
 				utilities.Response(utilities.ResponseParams{
 					Info:     constants.RESPONSE_INFO.NotFound,
 					Request:  request,
@@ -44,28 +66,59 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 			})
 			return
 		}
-		cacheError = setCacheValue(record.UID, &record)
-		if cacheError != nil {
+		encoded, encodeError := json.Marshal(&filesRecord)
+		if encodeError == nil {
+			cache.Client.Set(
+				context.Background(),
+				id,
+				encoded,
+				time.Duration(time.Hour)*8,
+			)
+		}
+	}
+
+	var metricsRecord database.Metrics
+	queryError := database.MetricsCollection.FindOneAndUpdate(
+		context.Background(),
+		bson.M{"uid": id},
+		bson.M{"$inc": bson.M{"downloads": 1}},
+	).Decode(&metricsRecord)
+	if queryError != nil {
+		if errors.Is(queryError, mongo.ErrNoDocuments) {
+			database.FilesCollection.DeleteOne(
+				context.Background(),
+				bson.D{{Key: "uid", Value: id}},
+			)
+			os.Remove(path)
 			utilities.Response(utilities.ResponseParams{
-				Info:     constants.RESPONSE_INFO.InternalServerError,
+				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,
 				Response: response,
-				Status:   http.StatusInternalServerError,
+				Status:   http.StatusNotFound,
 			})
 			return
 		}
-		cachedRecord = &record
+		utilities.Response(utilities.ResponseParams{
+			Info:     constants.RESPONSE_INFO.InternalServerError,
+			Request:  request,
+			Response: response,
+			Status:   http.StatusInternalServerError,
+		})
+		return
 	}
 
-	uploadsDirectoryName := utilities.GetEnv(
-		constants.ENV_NAMES.UplaodsDirectoryName,
-		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
-	)
-	file, fileError := os.Open(filepath.Join(uploadsDirectoryName, cachedRecord.UID))
+	file, fileError := os.Open(path)
 	if fileError != nil {
 		if errors.Is(fileError, os.ErrNotExist) {
-			deleteCachedRecord(cachedRecord.UID)
+			cache.Client.Del(
+				context.Background(),
+				id,
+			)
 			database.FilesCollection.DeleteOne(
+				context.Background(),
+				bson.D{{Key: "uid", Value: id}},
+			)
+			database.MetricsCollection.DeleteOne(
 				context.Background(),
 				bson.D{{Key: "uid", Value: id}},
 			)
@@ -89,7 +142,7 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 
 	response.Header().Set(
 		"Content-Disposition",
-		fmt.Sprintf("attachment; filename=%s", cachedRecord.OriginalName),
+		fmt.Sprintf("attachment; filename=%s", filesRecord.OriginalName),
 	)
-	http.ServeFile(response, request, filepath.Join(uploadsDirectoryName, cachedRecord.UID))
+	http.ServeFile(response, request, path)
 }

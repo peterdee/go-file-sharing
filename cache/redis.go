@@ -12,6 +12,7 @@ import (
 )
 
 var Client *redis.Client
+var NilError error = redis.Nil
 
 func Connect() {
 	redisHost := utilities.GetEnv(

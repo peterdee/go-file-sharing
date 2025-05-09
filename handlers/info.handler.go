@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
+	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/utilities"
@@ -17,31 +20,51 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
 	var filesRecord database.Files
-	queryError := database.FilesCollection.FindOne(
+
+	cachedFilesRecord, cacheError := cache.Client.Get(
 		context.Background(),
-		bson.M{"uid": id},
-	).Decode(&filesRecord)
-	if queryError != nil {
-		if errors.Is(queryError, mongo.ErrNoDocuments) {
+		id,
+	).Result()
+	if cacheError == nil {
+		cacheError = json.Unmarshal([]byte(cachedFilesRecord), &filesRecord)
+	}
+
+	if cacheError != nil {
+		queryError := database.FilesCollection.FindOne(
+			context.Background(),
+			bson.M{"uid": id},
+		).Decode(&filesRecord)
+		if queryError != nil {
+			if errors.Is(queryError, mongo.ErrNoDocuments) {
+				utilities.Response(utilities.ResponseParams{
+					Info:     constants.RESPONSE_INFO.NotFound,
+					Request:  request,
+					Response: response,
+					Status:   http.StatusNotFound,
+				})
+				return
+			}
 			utilities.Response(utilities.ResponseParams{
-				Info:     constants.RESPONSE_INFO.NotFound,
+				Info:     constants.RESPONSE_INFO.InternalServerError,
 				Request:  request,
 				Response: response,
-				Status:   http.StatusNotFound,
+				Status:   http.StatusInternalServerError,
 			})
 			return
 		}
-		utilities.Response(utilities.ResponseParams{
-			Info:     constants.RESPONSE_INFO.InternalServerError,
-			Request:  request,
-			Response: response,
-			Status:   http.StatusInternalServerError,
-		})
-		return
+		encoded, encodeError := json.Marshal(&filesRecord)
+		if encodeError == nil {
+			cache.Client.Set(
+				context.Background(),
+				id,
+				encoded,
+				time.Duration(time.Hour)*8,
+			)
+		}
 	}
 
 	var metricsRecord database.Metrics
-	queryError = database.MetricsCollection.FindOneAndUpdate(
+	queryError := database.MetricsCollection.FindOneAndUpdate(
 		context.Background(),
 		bson.M{"uid": id},
 		bson.M{"$inc": bson.M{"views": 1}},
