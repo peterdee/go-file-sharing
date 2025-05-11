@@ -49,15 +49,19 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 	uid := cuid2.Generate()
 	filesRecord := database.Files{
 		CreatedAt:    timestamp,
+		DeletedAt:    0,
+		IsDeleted:    false,
 		OriginalName: handler.Filename,
 		Size:         handler.Size,
 		UID:          uid,
 	}
 	metricsRecord := database.Metrics{
-		CreatedAt: timestamp,
-		Downloads: 0,
-		UID:       uid,
-		Views:     0,
+		CreatedAt:      timestamp,
+		Downloads:      0,
+		LastDownloaded: timestamp,
+		LastViewed:     timestamp,
+		UID:            uid,
+		Views:          0,
 	}
 
 	uploadsDirectoryName := utilities.GetEnv(

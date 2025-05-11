@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/julyskies/gohelpers"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
@@ -20,6 +23,12 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
 	var filesRecord database.Files
+
+	uploadsDirectoryName := utilities.GetEnv(
+		constants.ENV_NAMES.UplaodsDirectoryName,
+		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
+	)
+	path := filepath.Join(uploadsDirectoryName, id)
 
 	cachedFilesRecord, cacheError := cache.Client.Get(
 		context.Background(),
@@ -36,6 +45,8 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 		).Decode(&filesRecord)
 		if queryError != nil {
 			if errors.Is(queryError, mongo.ErrNoDocuments) {
+				database.MetricsCollection.DeleteOne(context.Background(), bson.M{"uid": id})
+				os.Remove(path)
 				utilities.Response(utilities.ResponseParams{
 					Info:     constants.RESPONSE_INFO.NotFound,
 					Request:  request,
@@ -64,13 +75,20 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var metricsRecord database.Metrics
+	timestamp := gohelpers.MakeTimestampSeconds()
 	queryError := database.MetricsCollection.FindOneAndUpdate(
 		context.Background(),
 		bson.M{"uid": id},
-		bson.M{"$inc": bson.M{"views": 1}},
+		bson.M{
+			"$inc": bson.M{"views": 1},
+			"$set": bson.M{"lastViewed": timestamp},
+		},
 	).Decode(&metricsRecord)
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
+			cache.Client.Del(context.Background(), id)
+			database.FilesCollection.DeleteOne(context.Background(), bson.M{"uid": id})
+			os.Remove(path)
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,
@@ -88,6 +106,7 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	metricsRecord.LastViewed = timestamp
 	metricsRecord.Views += 1
 
 	utilities.Response(utilities.ResponseParams{

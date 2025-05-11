@@ -21,29 +21,34 @@ func RemoveRecords() {
 		scheduler.NewJob(
 			gocron.DailyJob(
 				1,
-				gocron.NewAtTimes(gocron.NewAtTime(1, 0, 0)),
+				gocron.NewAtTimes(gocron.NewAtTime(1, 0, 0)), // 01:00 AM
 			),
 			gocron.NewTask(func() {
-				seconds := gohelpers.MakeTimestampSeconds() - 60*60*24*14 // 2 weeks
-				cursor, cursorError := database.FilesCollection.Find(
+				timestamp := gohelpers.MakeTimestampSeconds() - 60*60*24*14 // 2 weeks
+
+				cursor, cursorError := database.MetricsCollection.Find(
 					context.Background(),
-					bson.M{"createdAt": bson.M{"$lt": seconds}},
+					bson.M{
+						"lastDownloaded": bson.M{"$lt": timestamp},
+						"lastViewed":     bson.M{"$lt": timestamp},
+					},
 				)
 				if cursorError != nil {
 					log.Fatal(cursorError)
 				}
-				var filesRecords []database.Files
-				if cursorError = cursor.All(context.Background(), &filesRecords); cursorError != nil {
+				var records []database.Metrics
+				if cursorError = cursor.All(context.Background(), &records); cursorError != nil {
 					log.Fatal(cursorError)
 				}
-				uids := make([]string, len(filesRecords))
+
 				uploadsDirectoryName := utilities.GetEnv(
 					constants.ENV_NAMES.UplaodsDirectoryName,
 					constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
 				)
-				for _, file := range filesRecords {
-					uids = append(uids, file.UID)
-					os.Remove(filepath.Join(uploadsDirectoryName, file.UID))
+				uids := make([]string, len(records))
+				for index, metrics := range records {
+					os.Remove(filepath.Join(uploadsDirectoryName, metrics.UID))
+					uids[index] = metrics.UID
 				}
 				_, queryError := database.FilesCollection.DeleteMany(
 					context.Background(),
