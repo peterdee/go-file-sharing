@@ -57,7 +57,9 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 	}
 	metricsRecord := database.Metrics{
 		CreatedAt:      timestamp,
+		DeletedAt:      0,
 		Downloads:      0,
+		IsDeleted:      false,
 		LastDownloaded: timestamp,
 		LastViewed:     timestamp,
 		UID:            uid,

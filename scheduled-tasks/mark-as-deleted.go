@@ -10,12 +10,13 @@ import (
 	"github.com/julyskies/gohelpers"
 	"go.mongodb.org/mongo-driver/v2/bson"
 
+	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/utilities"
 )
 
-func RemoveRecords() {
+func MarkAsDeleted() {
 	scheduler, schedulerError := gocron.NewScheduler()
 	if schedulerError == nil {
 		scheduler.NewJob(
@@ -29,6 +30,7 @@ func RemoveRecords() {
 				cursor, cursorError := database.MetricsCollection.Find(
 					context.Background(),
 					bson.M{
+						"isDeleted":      false,
 						"lastDownloaded": bson.M{"$lt": timestamp},
 						"lastViewed":     bson.M{"$lt": timestamp},
 					},
@@ -50,16 +52,28 @@ func RemoveRecords() {
 					os.Remove(filepath.Join(uploadsDirectoryName, metrics.UID))
 					uids[index] = metrics.UID
 				}
-				_, queryError := database.FilesCollection.DeleteMany(
+				cache.Client.Del(
+					context.Background(),
+					uids...,
+				)
+				_, queryError := database.FilesCollection.UpdateMany(
 					context.Background(),
 					bson.M{"uid": bson.M{"$in": uids}},
+					bson.M{
+						"deletedAt": timestamp,
+						"isDeleted": true,
+					},
 				)
 				if queryError != nil {
 					log.Fatal(queryError)
 				}
-				_, queryError = database.MetricsCollection.DeleteMany(
+				_, queryError = database.MetricsCollection.UpdateMany(
 					context.Background(),
 					bson.M{"uid": bson.M{"$in": uids}},
+					bson.M{
+						"deletedAt": timestamp,
+						"isDeleted": true,
+					},
 				)
 				if queryError != nil {
 					log.Fatal(queryError)

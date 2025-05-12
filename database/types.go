@@ -11,7 +11,9 @@ type Files struct {
 
 type Metrics struct {
 	CreatedAt      int64  `json:"createdAt" bson:"createdAt"`
+	DeletedAt      int64  `json:"deletedAt" bson:"deletedAt"`
 	Downloads      int64  `json:"downloads" bson:"downloads"`
+	IsDeleted      bool   `json:"isDeleted" bson:"isDeleted"`
 	LastDownloaded int64  `json:"lastDownloaded" bson:"lastDownloaded"`
 	LastViewed     int64  `json:"lastViewed" bson:"lastViewed"`
 	UID            string `json:"uid" bson:"uid"`

@@ -36,7 +36,7 @@ func main() {
 	cache.Connect()
 	database.Connect()
 
-	scheduledtasks.RemoveRecords()
+	scheduledtasks.MarkAsDeleted()
 
 	http.HandleFunc("GET /", handlers.IndexHandler)
 	http.HandleFunc("GET /api", handlers.IndexHandler)
