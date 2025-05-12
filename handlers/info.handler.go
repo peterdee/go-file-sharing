@@ -6,8 +6,6 @@ import (
 	"errors"
 	"net/http"
 	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/julyskies/gohelpers"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -21,14 +19,9 @@ import (
 
 func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
+	path := createFilePath(id)
 
 	var filesRecord database.Files
-
-	uploadsDirectoryName := utilities.GetEnv(
-		constants.ENV_NAMES.UplaodsDirectoryName,
-		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
-	)
-	path := filepath.Join(uploadsDirectoryName, id)
 
 	cachedFilesRecord, cacheError := cache.Client.Get(
 		context.Background(),
@@ -63,15 +56,7 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 			})
 			return
 		}
-		encoded, encodeError := json.Marshal(&filesRecord)
-		if encodeError == nil {
-			cache.Client.Set(
-				context.Background(),
-				id,
-				encoded,
-				time.Duration(time.Hour)*8,
-			)
-		}
+		saveToCache(id, filesRecord)
 	}
 
 	var metricsRecord database.Metrics
@@ -86,9 +71,9 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	).Decode(&metricsRecord)
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
-			cache.Client.Del(context.Background(), id)
 			database.FilesCollection.DeleteOne(context.Background(), bson.M{"uid": id})
 			os.Remove(path)
+			removeFromCache(id)
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,

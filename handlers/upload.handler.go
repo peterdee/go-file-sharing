@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	"file-sharing/constants"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/julyskies/gohelpers"
 	"github.com/nrednav/cuid2"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func UploadHandler(response http.ResponseWriter, request *http.Request) {
@@ -64,11 +64,8 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		Views:          0,
 	}
 
-	uploadsDirectoryName := utilities.GetEnv(
-		constants.ENV_NAMES.UplaodsDirectoryName,
-		constants.DEFAULT_UPLOADS_DIRECTORY_NAME,
-	)
-	destination, fileError := os.Create(filepath.Join(uploadsDirectoryName, uid))
+	path := createFilePath(uid)
+	destination, fileError := os.Create(path)
 	if fileError != nil {
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,
@@ -95,6 +92,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		filesRecord,
 	)
 	if insertError != nil {
+		os.Remove(path)
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,
 			Request:  request,
@@ -108,6 +106,8 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		metricsRecord,
 	)
 	if insertError != nil {
+		database.FilesCollection.DeleteOne(context.Background(), bson.M{"uid": uid})
+		os.Remove(path)
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,
 			Request:  request,
