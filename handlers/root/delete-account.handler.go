@@ -1,4 +1,4 @@
-package handlers
+package root
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"file-sharing/utilities"
 )
 
-func IndexHandler(response http.ResponseWriter, request *http.Request) {
+func DeleteAccountHandler(response http.ResponseWriter, request *http.Request) {
 	utilities.Response(utilities.ResponseParams{
 		Request:  request,
 		Response: response,

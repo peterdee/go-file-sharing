@@ -1,4 +1,4 @@
-package auth
+package public
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"file-sharing/utilities"
 )
 
-func SetUpHandler(response http.ResponseWriter, request *http.Request) {
+func IndexHandler(response http.ResponseWriter, request *http.Request) {
 	utilities.Response(utilities.ResponseParams{
 		Request:  request,
 		Response: response,
