@@ -42,14 +42,6 @@ func main() {
 
 	scheduledtasks.MarkAsDeleted()
 
-	// public mux
-	publicHandlers := http.NewServeMux()
-	publicHandlers.HandleFunc("GET /", public.IndexHandler)
-	publicHandlers.HandleFunc("GET /api", public.IndexHandler)
-	publicHandlers.HandleFunc("GET /api/download/{id}", public.DownloadHandler)
-	publicHandlers.HandleFunc("GET /api/info/{id}", public.InfoHandler)
-	publicHandlers.HandleFunc("POST /api/upload", public.UploadHandler)
-
 	// auth mux
 	authHandlers := http.NewServeMux()
 	authHandlers.HandleFunc("POST /set-up", auth.SetUpHandler)
@@ -60,6 +52,13 @@ func main() {
 	managingHandlers.HandleFunc("DELETE /file/{id}", manage.DeleteFileHandler)
 	managingHandlers.HandleFunc("GET /file/{id}", manage.DeleteFileHandler)
 	managingHandlers.HandleFunc("GET /list", manage.ListFilesHandler)
+
+	// public mux
+	publicHandlers := http.NewServeMux()
+	publicHandlers.HandleFunc("GET /", public.IndexHandler)
+	publicHandlers.HandleFunc("GET /download/{id}", public.DownloadHandler)
+	publicHandlers.HandleFunc("GET /info/{id}", public.InfoHandler)
+	publicHandlers.HandleFunc("POST /upload", public.UploadHandler)
 
 	// root mux
 	rootHandlers := http.NewServeMux()
@@ -77,12 +76,13 @@ func main() {
 
 	log.Printf("Server is running on port %s", port)
 
-	rootMux := http.NewServeMux()
-	rootMux.Handle("/", publicHandlers)
-	rootMux.Handle("/api/auth", authHandlers)
-	rootMux.Handle("/api/manage", managingHandlers)
-	rootMux.Handle("/api/root", rootHandlers)
-	serveError := http.Serve(listener, middlewares.WithLogger(rootMux))
+	combineMux := http.NewServeMux()
+	combineMux.Handle("/api/auth/", http.StripPrefix("/api/auth", authHandlers))
+	combineMux.Handle("/api/manage", http.StripPrefix("/api/manage", managingHandlers))
+	combineMux.Handle("/api/public/", http.StripPrefix("/api/public", publicHandlers))
+	combineMux.Handle("/api/root/", http.StripPrefix("/api/root", rootHandlers))
+
+	serveError := http.Serve(listener, middlewares.WithLogger(combineMux))
 	if serveError != nil {
 		log.Fatal(serveError)
 	}

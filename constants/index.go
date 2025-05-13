@@ -24,6 +24,7 @@ var ENV_NAMES = EnvNames{
 }
 
 var RESPONSE_INFO = ResponseInfo{
+	BadRequest:            "BAD_REQUEST",
 	FileNotAvailable:      "FILE_NOT_AVAILABLE",
 	InternalServerError:   "INTERNAL_SERVER_ERROR",
 	NotFound:              "NOT_FOUND",

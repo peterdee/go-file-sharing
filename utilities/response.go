@@ -10,19 +10,21 @@ import (
 )
 
 type ResponseParams struct {
-	Data     any
-	Info     string
-	Request  *http.Request
-	Response http.ResponseWriter
-	Status   int
+	Data        any
+	Info        string
+	InfoDetails string
+	Request     *http.Request
+	Response    http.ResponseWriter
+	Status      int
 }
 
 type responseObject struct {
-	Data     any    `json:"data,omitempty"`
-	Datetime int64  `json:"datetime"`
-	Info     string `json:"info"`
-	Request  string `json:"request"`
-	Status   int    `json:"status"`
+	Data        any    `json:"data,omitempty"`
+	Datetime    int64  `json:"datetime"`
+	Info        string `json:"info"`
+	InfoDetails string `json:"infoDetails,omitempty"`
+	Request     string `json:"request"`
+	Status      int    `json:"status"`
 }
 
 func Response(params ResponseParams) {
@@ -37,10 +39,11 @@ func Response(params ResponseParams) {
 	}
 
 	responseObject := responseObject{
-		Datetime: time.Now().UnixMilli(),
-		Info:     info,
-		Request:  fmt.Sprintf("%s [%s]", params.Request.RequestURI, params.Request.Method),
-		Status:   status,
+		Datetime:    time.Now().UnixMilli(),
+		Info:        info,
+		InfoDetails: params.InfoDetails,
+		Request:     fmt.Sprintf("%s [%s]", params.Request.RequestURI, params.Request.Method),
+		Status:      status,
 	}
 	if params.Data != nil {
 		responseObject.Data = params.Data
