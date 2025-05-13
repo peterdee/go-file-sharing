@@ -12,6 +12,8 @@ import (
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/handlers"
+	"file-sharing/handlers/manage"
+	"file-sharing/middlewares"
 	scheduledtasks "file-sharing/scheduled-tasks"
 	"file-sharing/utilities"
 )
@@ -38,11 +40,17 @@ func main() {
 
 	scheduledtasks.MarkAsDeleted()
 
-	http.HandleFunc("GET /", handlers.IndexHandler)
-	http.HandleFunc("GET /api", handlers.IndexHandler)
-	http.HandleFunc("GET /api/download/{id}", handlers.DownloadHandler)
-	http.HandleFunc("GET /api/info/{id}", handlers.InfoHandler)
-	http.HandleFunc("POST /api/upload", handlers.UploadHandler)
+	// public mux
+	publicHandlers := http.NewServeMux()
+	publicHandlers.HandleFunc("GET /", handlers.IndexHandler)
+	publicHandlers.HandleFunc("GET /api", handlers.IndexHandler)
+	publicHandlers.HandleFunc("GET /api/download/{id}", handlers.DownloadHandler)
+	publicHandlers.HandleFunc("GET /api/info/{id}", handlers.InfoHandler)
+	publicHandlers.HandleFunc("POST /api/upload", handlers.UploadHandler)
+
+	// managing mux
+	managingHandlers := http.NewServeMux()
+	managingHandlers.HandleFunc("GET /files", manage.ListFilesHandler)
 
 	port := utilities.GetEnv(constants.ENV_NAMES.Port, constants.DEFAULT_PORT)
 	listener, listenError := net.Listen("tcp", ":"+port)
@@ -52,7 +60,11 @@ func main() {
 
 	log.Printf("Server is running on port %s", port)
 
-	if serveError := http.Serve(listener, nil); serveError != nil {
+	rootMux := http.NewServeMux()
+	rootMux.Handle("/", publicHandlers)
+	rootMux.Handle("/api/manage", managingHandlers)
+	serveError := http.Serve(listener, middlewares.WithLogger(rootMux))
+	if serveError != nil {
 		log.Fatal(serveError)
 	}
 }

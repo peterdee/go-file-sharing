@@ -19,3 +19,13 @@ type Metrics struct {
 	UID            string `json:"uid" bson:"uid"`
 	Views          int64  `json:"views" bson:"views"`
 }
+
+type Users struct {
+	CreatedAt      int64  `json:"createdAt" bson:"createdAt"`
+	DeletedAt      int64  `json:"deletedAt" bson:"deletedAt"`
+	Email          string `json:"email" bson:"email"`
+	IsDeleted      bool   `json:"isDeleted" bson:"isDeleted"`
+	PasswordHash   string `json:"-" bson:"passwordHash"`
+	Role           string `json:"role" bson:"role"`
+	SetUpCompleted bool   `json:"setUpCompleted" bson:"setUpCompleted"`
+}
