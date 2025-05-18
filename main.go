@@ -44,6 +44,7 @@ func main() {
 
 	// auth mux
 	authHandlers := http.NewServeMux()
+	authHandlers.HandleFunc("GET /account", auth.GetAccountHandler)
 	authHandlers.HandleFunc("POST /set-up", auth.SetUpHandler)
 	authHandlers.HandleFunc("POST /sign-in", auth.SignInHandler)
 

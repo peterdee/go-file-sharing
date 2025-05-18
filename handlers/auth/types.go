@@ -1,10 +1,11 @@
 package auth
 
-type setUpRequestPayload struct {
+type SetUpRequestPayload struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type signInRequestPayload struct {
-	setUpRequestPayload
+type SignInRequestPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }

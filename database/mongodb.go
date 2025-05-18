@@ -17,10 +17,13 @@ const FILES_COLLECTION_NAME string = "files"
 
 const METRICS_COLLECTION_NAME string = "metrics"
 
+const USERS_COLLECTION_NAME string = "users"
+
 var Client *mongo.Client
 var Database *mongo.Database
 var FilesCollection *mongo.Collection
 var MetricsCollection *mongo.Collection
+var UsersCollection *mongo.Collection
 
 func Connect() {
 	connectionString := utilities.GetEnv(constants.ENV_NAMES.DatabaseConnectionString)
@@ -59,6 +62,7 @@ func Connect() {
 	Database = Client.Database(databaseName)
 	FilesCollection = Database.Collection(FILES_COLLECTION_NAME)
 	MetricsCollection = Database.Collection(METRICS_COLLECTION_NAME)
+	UsersCollection = Database.Collection(USERS_COLLECTION_NAME)
 
 	log.Println("MongoDB connection is ready")
 }
