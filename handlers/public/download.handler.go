@@ -71,12 +71,16 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var metricsRecord database.Metrics
+	timestamp := gohelpers.MakeTimestampSeconds()
 	queryError := database.MetricsCollection.FindOneAndUpdate(
 		context.Background(),
 		bson.M{"uid": id},
 		bson.M{
 			"$inc": bson.M{"downloads": 1},
-			"$set": bson.M{"lastDownloaded": gohelpers.MakeTimestampSeconds()},
+			"$set": bson.M{
+				"lastDownloaded": timestamp,
+				"updatedAt":      timestamp,
+			},
 		},
 	).Decode(&metricsRecord)
 	if queryError != nil {

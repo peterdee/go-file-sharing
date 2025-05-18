@@ -16,7 +16,7 @@ func BodyParser(
 	if contentType != "" {
 		mediaType := strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
 		if mediaType != "application/x-www-form-urlencoded" {
-			return nil, errors.New("Content-Type header is not application/x-www-form-urlencoded")
+			return nil, errors.New("content-type header is not application/x-www-form-urlencoded")
 		}
 	}
 
@@ -29,7 +29,7 @@ func BodyParser(
 	)
 
 	if parsingError := request.ParseForm(); parsingError != nil {
-		return nil, errors.New("Malformed request payload")
+		return nil, errors.New("malformed request payload")
 	}
 
 	result := make(map[string]string)

@@ -62,6 +62,7 @@ func MarkAsDeleted() {
 					bson.M{
 						"deletedAt": timestamp,
 						"isDeleted": true,
+						"updatedAt": timestamp,
 					},
 				)
 				if queryError != nil {
@@ -73,6 +74,7 @@ func MarkAsDeleted() {
 					bson.M{
 						"deletedAt": timestamp,
 						"isDeleted": true,
+						"updatedAt": timestamp,
 					},
 				)
 				if queryError != nil {

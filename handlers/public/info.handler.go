@@ -66,7 +66,10 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 		bson.M{"uid": id},
 		bson.M{
 			"$inc": bson.M{"views": 1},
-			"$set": bson.M{"lastViewed": timestamp},
+			"$set": bson.M{
+				"lastViewed": timestamp,
+				"updatedAt":  timestamp,
+			},
 		},
 	).Decode(&metricsRecord)
 	if queryError != nil {

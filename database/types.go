@@ -7,6 +7,7 @@ type Files struct {
 	OriginalName string `json:"originalName" bson:"originalName"`
 	Size         int64  `json:"size" bson:"size"`
 	UID          string `json:"uid" bson:"uid"`
+	UpdatedAt    int64  `json:"updatedAt" bson:"updatedAt"`
 }
 
 type Metrics struct {
@@ -17,6 +18,7 @@ type Metrics struct {
 	LastDownloaded int64  `json:"lastDownloaded" bson:"lastDownloaded"`
 	LastViewed     int64  `json:"lastViewed" bson:"lastViewed"`
 	UID            string `json:"uid" bson:"uid"`
+	UpdatedAt      int64  `json:"updatedAt" bson:"updatedAt"`
 	Views          int64  `json:"views" bson:"views"`
 }
 
@@ -28,4 +30,5 @@ type Users struct {
 	PasswordHash   string `json:"-" bson:"passwordHash"`
 	Role           string `json:"role" bson:"role"`
 	SetUpCompleted bool   `json:"setUpCompleted" bson:"setUpCompleted"`
+	UpdatedAt      int64  `json:"updatedAt" bson:"updatedAt"`
 }

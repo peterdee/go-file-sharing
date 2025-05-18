@@ -64,5 +64,7 @@ func Connect() {
 	MetricsCollection = Database.Collection(METRICS_COLLECTION_NAME)
 	UsersCollection = Database.Collection(USERS_COLLECTION_NAME)
 
+	seeding()
+
 	log.Println("MongoDB connection is ready")
 }
