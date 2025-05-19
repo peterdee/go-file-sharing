@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/julyskies/gohelpers"
+	"github.com/nrednav/cuid2"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
@@ -39,6 +40,7 @@ func seeding() {
 					PasswordHash:   "",
 					Role:           constants.ROLES.Root,
 					SetUpCompleted: false,
+					UID:            cuid2.Generate(),
 					UpdatedAt:      timestamp,
 				},
 			)

@@ -4,6 +4,8 @@ const DEFAULT_DATABASE_NAME string = "fileshare"
 
 const DEFAULT_JWT_EXPIRATION_SECONDS int = 1209600
 
+const DEFAULT_JWT_SECRET string = "jwt-secret"
+
 const DEFAULT_PORT string = "9000"
 
 const DEFAULT_REDIS_HOST string = "localhost:6379"

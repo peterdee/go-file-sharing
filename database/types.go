@@ -30,5 +30,6 @@ type Users struct {
 	PasswordHash   string `json:"-" bson:"passwordHash"`
 	Role           string `json:"role" bson:"role"`
 	SetUpCompleted bool   `json:"setUpCompleted" bson:"setUpCompleted"`
+	UID            string `json:"uid" bson:"uid"`
 	UpdatedAt      int64  `json:"updatedAt" bson:"updatedAt"`
 }

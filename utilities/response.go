@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
+
+	"github.com/julyskies/gohelpers"
 
 	"file-sharing/constants"
 )
@@ -39,7 +40,7 @@ func Response(params ResponseParams) {
 	}
 
 	responseObject := responseObject{
-		Datetime:    time.Now().UnixMilli(),
+		Datetime:    gohelpers.MakeTimestampSeconds(),
 		Info:        info,
 		InfoDetails: params.InfoDetails,
 		Request:     fmt.Sprintf("%s [%s]", params.Request.RequestURI, params.Request.Method),

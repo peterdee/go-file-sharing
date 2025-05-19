@@ -11,6 +11,7 @@ import (
 	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
+	"file-sharing/handlers/account"
 	"file-sharing/handlers/auth"
 	"file-sharing/handlers/manage"
 	"file-sharing/handlers/public"
@@ -42,9 +43,12 @@ func main() {
 
 	scheduledtasks.MarkAsDeleted()
 
+	// account mux
+	accountHandlers := http.NewServeMux()
+	accountHandlers.HandleFunc("GET /account", account.GetAccountHandler)
+
 	// auth mux
 	authHandlers := http.NewServeMux()
-	authHandlers.HandleFunc("GET /account", auth.GetAccountHandler)
 	authHandlers.HandleFunc("POST /set-up", auth.SetUpHandler)
 	authHandlers.HandleFunc("POST /sign-in", auth.SignInHandler)
 
@@ -78,6 +82,7 @@ func main() {
 	log.Printf("Server is running on port %s", port)
 
 	combineMux := http.NewServeMux()
+	combineMux.Handle("/api/account/", http.StripPrefix("/api/account", accountHandlers))
 	combineMux.Handle("/api/auth/", http.StripPrefix("/api/auth", authHandlers))
 	combineMux.Handle("/api/manage", http.StripPrefix("/api/manage", managingHandlers))
 	combineMux.Handle("/api/public/", http.StripPrefix("/api/public", publicHandlers))

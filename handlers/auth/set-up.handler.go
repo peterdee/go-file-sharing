@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/julyskies/gohelpers"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -26,7 +27,7 @@ func SetUpHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	email := parsed["email"]
+	email := strings.ToLower(strings.Trim(parsed["email"], " "))
 	if email == "" {
 		utilities.Response(utilities.ResponseParams{
 			Info:        constants.RESPONSE_INFO.BadRequest,
@@ -37,7 +38,7 @@ func SetUpHandler(response http.ResponseWriter, request *http.Request) {
 		})
 		return
 	}
-	password := parsed["password"]
+	password := strings.Trim(parsed["password"], " ")
 	if password == "" {
 		utilities.Response(utilities.ResponseParams{
 			Info:        constants.RESPONSE_INFO.BadRequest,
@@ -65,12 +66,15 @@ func SetUpHandler(response http.ResponseWriter, request *http.Request) {
 		request.Context(),
 		bson.M{
 			"email":          email,
+			"isDeleted":      false,
 			"setUpCompleted": false,
 		},
 		bson.M{
-			"passwordHash":   passwordHash,
-			"setUpCompleted": true,
-			"updatedAt":      gohelpers.MakeTimestampSeconds(),
+			"$set": bson.M{
+				"passwordHash":   passwordHash,
+				"setUpCompleted": true,
+				"updatedAt":      gohelpers.MakeTimestampSeconds(),
+			},
 		},
 	).Decode(&user)
 	if queryError != nil {
