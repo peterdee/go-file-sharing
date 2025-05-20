@@ -62,11 +62,10 @@ func SignInHandler(response http.ResponseWriter, request *http.Request) {
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
-				Info:        constants.RESPONSE_INFO.NotFound,
-				InfoDetails: "Account not found",
-				Request:     request,
-				Response:    response,
-				Status:      http.StatusNotFound,
+				Info:     constants.RESPONSE_INFO.Unauthorized,
+				Request:  request,
+				Response: response,
+				Status:   http.StatusUnauthorized,
 			})
 			return
 		}
@@ -75,6 +74,29 @@ func SignInHandler(response http.ResponseWriter, request *http.Request) {
 			Request:  request,
 			Response: response,
 			Status:   http.StatusInternalServerError,
+		})
+		return
+	}
+
+	match, hashError := utilities.ComparePlaintextWithHash(
+		password,
+		user.PasswordHash,
+	)
+	if hashError != nil {
+		utilities.Response(utilities.ResponseParams{
+			Info:     constants.RESPONSE_INFO.InternalServerError,
+			Request:  request,
+			Response: response,
+			Status:   http.StatusInternalServerError,
+		})
+		return
+	}
+	if !match {
+		utilities.Response(utilities.ResponseParams{
+			Info:     constants.RESPONSE_INFO.Unauthorized,
+			Request:  request,
+			Response: response,
+			Status:   http.StatusUnauthorized,
 		})
 		return
 	}

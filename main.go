@@ -45,7 +45,7 @@ func main() {
 
 	// account mux
 	accountHandlers := http.NewServeMux()
-	accountHandlers.HandleFunc("GET /account", account.GetAccountHandler)
+	accountHandlers.HandleFunc("GET /", account.GetAccountHandler)
 
 	// auth mux
 	authHandlers := http.NewServeMux()
@@ -82,7 +82,10 @@ func main() {
 	log.Printf("Server is running on port %s", port)
 
 	combineMux := http.NewServeMux()
-	combineMux.Handle("/api/account/", http.StripPrefix("/api/account", accountHandlers))
+	combineMux.Handle(
+		"/api/account/",
+		http.StripPrefix("/api/account", middlewares.WithAuthorization(accountHandlers)),
+	)
 	combineMux.Handle("/api/auth/", http.StripPrefix("/api/auth", authHandlers))
 	combineMux.Handle("/api/manage", http.StripPrefix("/api/manage", managingHandlers))
 	combineMux.Handle("/api/public/", http.StripPrefix("/api/public", publicHandlers))

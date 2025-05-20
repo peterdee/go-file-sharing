@@ -1,7 +1,6 @@
 package public
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"strconv"
@@ -90,7 +89,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 	}
 
 	_, insertError := database.FilesCollection.InsertOne(
-		context.Background(),
+		request.Context(),
 		filesRecord,
 	)
 	if insertError != nil {
@@ -104,11 +103,11 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	_, insertError = database.MetricsCollection.InsertOne(
-		context.Background(),
+		request.Context(),
 		metricsRecord,
 	)
 	if insertError != nil {
-		database.FilesCollection.DeleteOne(context.Background(), bson.M{"uid": uid})
+		database.FilesCollection.DeleteOne(request.Context(), bson.M{"uid": uid})
 		os.Remove(path)
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,

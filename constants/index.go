@@ -32,6 +32,7 @@ var RESPONSE_INFO = ResponseInfo{
 	NotFound:              "NOT_FOUND",
 	Ok:                    "OK",
 	RequestEntityTooLarge: "REQUEST_ENTITY_TOO_LARGE",
+	Unauthorized:          "UNAUTHORIZED",
 }
 
 var ROLES = Roles{

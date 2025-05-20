@@ -20,6 +20,7 @@ type ResponseInfo struct {
 	NotFound              string
 	Ok                    string
 	RequestEntityTooLarge string
+	Unauthorized          string
 }
 
 type Roles struct {

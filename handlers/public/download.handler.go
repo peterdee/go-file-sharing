@@ -1,7 +1,6 @@
 package public
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,7 +24,7 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	var filesRecord database.Files
 
 	cachedFilesRecord, cacheError := cache.Client.Get(
-		context.Background(),
+		request.Context(),
 		id,
 	).Result()
 	if cacheError == nil {
@@ -34,12 +33,12 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 
 	if cacheError != nil {
 		queryError := database.FilesCollection.FindOne(
-			context.Background(),
+			request.Context(),
 			bson.M{"uid": id},
 		).Decode(&filesRecord)
 		if queryError != nil {
 			if errors.Is(queryError, mongo.ErrNoDocuments) {
-				database.MetricsCollection.DeleteOne(context.Background(), bson.M{"uid": id})
+				database.MetricsCollection.DeleteOne(request.Context(), bson.M{"uid": id})
 				os.Remove(path)
 				utilities.Response(utilities.ResponseParams{
 					Info:     constants.RESPONSE_INFO.NotFound,
@@ -73,7 +72,7 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	var metricsRecord database.Metrics
 	timestamp := gohelpers.MakeTimestampSeconds()
 	queryError := database.MetricsCollection.FindOneAndUpdate(
-		context.Background(),
+		request.Context(),
 		bson.M{"uid": id},
 		bson.M{
 			"$inc": bson.M{"downloads": 1},
@@ -85,7 +84,7 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	).Decode(&metricsRecord)
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
-			database.FilesCollection.DeleteOne(context.Background(), bson.M{"uid": id})
+			database.FilesCollection.DeleteOne(request.Context(), bson.M{"uid": id})
 			os.Remove(path)
 			removeFromCache(id)
 			utilities.Response(utilities.ResponseParams{
@@ -108,8 +107,8 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	file, fileError := os.Open(path)
 	if fileError != nil {
 		if errors.Is(fileError, os.ErrNotExist) {
-			database.FilesCollection.DeleteOne(context.Background(), bson.M{"uid": id})
-			database.MetricsCollection.DeleteOne(context.Background(), bson.M{"uid": id})
+			database.FilesCollection.DeleteOne(request.Context(), bson.M{"uid": id})
+			database.MetricsCollection.DeleteOne(request.Context(), bson.M{"uid": id})
 			removeFromCache(id)
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,

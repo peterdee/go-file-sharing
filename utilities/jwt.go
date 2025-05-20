@@ -1,6 +1,7 @@
 package utilities
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -8,6 +9,11 @@ import (
 
 	"file-sharing/constants"
 )
+
+type jwtClaims struct {
+	UID string `json:"uid"`
+	jwt.RegisteredClaims
+}
 
 func CreateJwt(uid string) (string, error) {
 	tokenExpirationSeconds := constants.DEFAULT_JWT_EXPIRATION_SECONDS
@@ -32,4 +38,25 @@ func CreateJwt(uid string) (string, error) {
 	)
 
 	return token.SignedString([]byte(tokenSecret))
+}
+
+func ValidateJwt(token string) (string, error) {
+	tokenSecret := GetEnv(constants.ENV_NAMES.JwtSectet, constants.DEFAULT_JWT_SECRET)
+
+	tokenInstance, parseError := jwt.ParseWithClaims(
+		token,
+		&jwtClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(tokenSecret), nil
+		},
+	)
+	if parseError != nil {
+		// TODO: handle errors
+		return "", parseError
+	}
+	claims, ok := tokenInstance.Claims.(*jwtClaims)
+	if !ok {
+		return "", errors.New("invalid token")
+	}
+	return claims.UID, nil
 }
