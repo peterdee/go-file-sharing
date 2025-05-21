@@ -87,10 +87,22 @@ func main() {
 		"/api/account/",
 		http.StripPrefix("/api/account", middlewares.WithAuthorization(accountHandlers)),
 	)
-	combineMux.Handle("/api/auth/", http.StripPrefix("/api/auth", authHandlers))
-	combineMux.Handle("/api/manage/", http.StripPrefix("/api/manage", managingHandlers))
-	combineMux.Handle("/api/public/", http.StripPrefix("/api/public", publicHandlers))
-	combineMux.Handle("/api/root/", http.StripPrefix("/api/root", rootHandlers))
+	combineMux.Handle(
+		"/api/auth/",
+		http.StripPrefix("/api/auth", authHandlers),
+	)
+	combineMux.Handle(
+		"/api/manage/",
+		http.StripPrefix("/api/manage", middlewares.WithAuthorization(managingHandlers)),
+	)
+	combineMux.Handle(
+		"/api/public/",
+		http.StripPrefix("/api/public", publicHandlers),
+	)
+	combineMux.Handle(
+		"/api/root/",
+		http.StripPrefix("/api/root", middlewares.WithAuthorization(rootHandlers)),
+	)
 
 	serveError := http.Serve(listener, middlewares.WithLogger(combineMux))
 	if serveError != nil {

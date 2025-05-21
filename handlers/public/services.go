@@ -21,20 +21,30 @@ func createFilePath(uid string) string {
 	)
 }
 
-func removeFromCache(key string) error {
-	_, delError := cache.Client.Del(context.Background(), key).Result()
+func getFromCache(uid string, requestContext context.Context) (string, error) {
+	return cache.Client.Get(
+		requestContext,
+		cache.CreateKey(cache.KeyPrefixes.File, uid),
+	).Result()
+}
+
+func removeFromCache(uid string, requestContext context.Context) error {
+	_, delError := cache.Client.Del(
+		context.Background(),
+		cache.CreateKey(cache.KeyPrefixes.File, uid),
+	).Result()
 	return delError
 }
 
-func saveToCache(key string, value interface{}) error {
+func saveToCache(uid string, value any, requestContext context.Context) error {
 	encoded, encodeError := json.Marshal(&value)
 	if encodeError != nil {
 		return encodeError
 	}
 	_, setError := cache.Client.Set(
-		context.Background(),
-		key,
-		encoded,
+		requestContext,
+		cache.CreateKey(cache.KeyPrefixes.File, uid),
+		string(encoded),
 		time.Duration(time.Hour)*8,
 	).Result()
 	return setError

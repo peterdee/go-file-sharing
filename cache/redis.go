@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -12,7 +13,13 @@ import (
 )
 
 var Client *redis.Client
+
 var NilError error = redis.Nil
+
+var KeyPrefixes = KeyPrefixesStruct{
+	Account: "account",
+	File:    "file",
+}
 
 func Connect() {
 	redisHost := utilities.GetEnv(
@@ -42,4 +49,8 @@ func Connect() {
 	}
 
 	log.Println("Redis connection is ready")
+}
+
+func CreateKey(prefix, value string) string {
+	return fmt.Sprintf("%s-%s", prefix, value)
 }

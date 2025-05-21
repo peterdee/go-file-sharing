@@ -51,7 +51,8 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	uid := middlewares.GetUidFromRequestContext(request.Context())
+	userData := middlewares.GetUserDataFromRequestContext(request.Context())
+	uid := userData.Uid
 	if uid == "" {
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,
@@ -63,12 +64,7 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 	}
 
 	var user database.Users
-	queryError := database.UsersCollection.FindOne(
-		request.Context(),
-		bson.M{
-			"uid": uid,
-		},
-	).Decode(&user)
+	queryError := getUserFromDatabase(uid, &user, request.Context())
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
@@ -121,9 +117,7 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 
 	_, queryError = database.UsersCollection.UpdateOne(
 		request.Context(),
-		bson.M{
-			"uid": uid,
-		},
+		bson.M{"uid": uid},
 		bson.M{
 			"$set": bson.M{
 				"passwordHash": newPasswordHash,

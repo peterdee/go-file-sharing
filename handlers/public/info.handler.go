@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
-	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/utilities"
@@ -22,10 +21,7 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 
 	var filesRecord database.Files
 
-	cachedFilesRecord, cacheError := cache.Client.Get(
-		request.Context(),
-		id,
-	).Result()
+	cachedFilesRecord, cacheError := getFromCache(id, request.Context())
 	if cacheError == nil {
 		cacheError = json.Unmarshal([]byte(cachedFilesRecord), &filesRecord)
 	}
@@ -55,7 +51,7 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 			})
 			return
 		}
-		saveToCache(id, filesRecord)
+		saveToCache(id, filesRecord, request.Context())
 	}
 
 	var metricsRecord database.Metrics
@@ -75,7 +71,7 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
 			database.FilesCollection.DeleteOne(request.Context(), bson.M{"uid": id})
 			os.Remove(path)
-			removeFromCache(id)
+			removeFromCache(id, request.Context())
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,
