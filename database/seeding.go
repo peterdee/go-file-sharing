@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strings"
 
 	"github.com/julyskies/gohelpers"
 	"github.com/nrednav/cuid2"
@@ -35,7 +36,7 @@ func seeding() {
 				Users{
 					CreatedAt:      timestamp,
 					DeletedAt:      0,
-					Email:          rootEmail,
+					Email:          strings.ToLower(strings.Trim(rootEmail, " ")),
 					IsDeleted:      false,
 					PasswordHash:   "",
 					Role:           constants.ROLES.Root,

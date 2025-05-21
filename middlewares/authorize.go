@@ -2,7 +2,10 @@ package middlewares
 
 import (
 	"context"
+	"errors"
 	"net/http"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	"file-sharing/constants"
 	"file-sharing/utilities"
@@ -34,9 +37,16 @@ func (auth *Authorize) ServeHTTP(response http.ResponseWriter, request *http.Req
 	}
 	uid, tokenError := utilities.ValidateJwt(token)
 	if tokenError != nil {
+		infoDetails := ""
+		if errors.Is(tokenError, jwt.ErrSignatureInvalid) {
+			infoDetails = "Token is invalid"
+		}
+		if errors.Is(tokenError, jwt.ErrTokenExpired) {
+			infoDetails = "Token is expired"
+		}
 		utilities.Response(utilities.ResponseParams{
 			Info:        constants.RESPONSE_INFO.Unauthorized,
-			InfoDetails: "Missing JWT",
+			InfoDetails: infoDetails,
 			Request:     request,
 			Response:    response,
 			Status:      http.StatusUnauthorized,

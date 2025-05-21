@@ -46,6 +46,7 @@ func main() {
 	// account mux
 	accountHandlers := http.NewServeMux()
 	accountHandlers.HandleFunc("GET /", account.GetAccountHandler)
+	accountHandlers.HandleFunc("PATCH /password", account.ChangePasswordHandler)
 
 	// auth mux
 	authHandlers := http.NewServeMux()
@@ -87,7 +88,7 @@ func main() {
 		http.StripPrefix("/api/account", middlewares.WithAuthorization(accountHandlers)),
 	)
 	combineMux.Handle("/api/auth/", http.StripPrefix("/api/auth", authHandlers))
-	combineMux.Handle("/api/manage", http.StripPrefix("/api/manage", managingHandlers))
+	combineMux.Handle("/api/manage/", http.StripPrefix("/api/manage", managingHandlers))
 	combineMux.Handle("/api/public/", http.StripPrefix("/api/public", publicHandlers))
 	combineMux.Handle("/api/root/", http.StripPrefix("/api/root", rootHandlers))
 
