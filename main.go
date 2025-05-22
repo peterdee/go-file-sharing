@@ -11,11 +11,11 @@ import (
 	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
-	"file-sharing/handlers/account"
 	"file-sharing/handlers/auth"
 	"file-sharing/handlers/manage"
 	"file-sharing/handlers/public"
 	"file-sharing/handlers/root"
+	"file-sharing/handlers/user"
 	"file-sharing/middlewares"
 	scheduledtasks "file-sharing/scheduled-tasks"
 	"file-sharing/utilities"
@@ -43,11 +43,6 @@ func main() {
 
 	scheduledtasks.MarkAsDeleted()
 
-	// account mux
-	accountHandlers := http.NewServeMux()
-	accountHandlers.HandleFunc("GET /", account.GetAccountHandler)
-	accountHandlers.HandleFunc("PATCH /password", account.ChangePasswordHandler)
-
 	// auth mux
 	authHandlers := http.NewServeMux()
 	authHandlers.HandleFunc("POST /set-up", auth.SetUpHandler)
@@ -74,6 +69,11 @@ func main() {
 	rootHandlers.HandleFunc("PATCH /{id}", root.UpdateAccountHandler)
 	rootHandlers.HandleFunc("POST /", root.CreateAccountHandler)
 
+	// user mux
+	userHandlers := http.NewServeMux()
+	userHandlers.HandleFunc("GET /", user.GetUserHandler)
+	userHandlers.HandleFunc("PATCH /password", user.ChangePasswordHandler)
+
 	port := utilities.GetEnv(constants.ENV_NAMES.Port, constants.DEFAULT_PORT)
 	listener, listenError := net.Listen("tcp", ":"+port)
 	if listenError != nil {
@@ -84,8 +84,8 @@ func main() {
 
 	combineMux := http.NewServeMux()
 	combineMux.Handle(
-		"/api/account/",
-		http.StripPrefix("/api/account", middlewares.WithAuthorization(accountHandlers)),
+		"/api/user/",
+		http.StripPrefix("/api/user", middlewares.WithAuthorization(userHandlers)),
 	)
 	combineMux.Handle(
 		"/api/auth/",

@@ -1,4 +1,4 @@
-package account
+package user
 
 import (
 	"errors"
@@ -64,7 +64,7 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 	}
 
 	var user database.Users
-	queryError := getUserFromDatabase(uid, &user, request.Context())
+	queryError := database.Operations.GetUser(bson.M{"uid": uid}, &user, request.Context())
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
@@ -115,8 +115,7 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	_, queryError = database.UsersCollection.UpdateOne(
-		request.Context(),
+	queryError = database.Operations.UpdateUser(
 		bson.M{"uid": uid},
 		bson.M{
 			"$set": bson.M{
@@ -124,6 +123,7 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 				"updatedAt":    gohelpers.MakeTimestampSeconds(),
 			},
 		},
+		request.Context(),
 	)
 	if queryError != nil {
 		utilities.Response(utilities.ResponseParams{

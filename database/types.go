@@ -1,5 +1,11 @@
 package database
 
+import "go.mongodb.org/mongo-driver/v2/mongo"
+
+type CommonOperations struct {
+	Client *mongo.Client
+}
+
 type Files struct {
 	CreatedAt    int64  `json:"createdAt" bson:"createdAt"`
 	DeletedAt    int64  `json:"deletedAt" bson:"deletedAt"`

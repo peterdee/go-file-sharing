@@ -2,10 +2,8 @@ package middlewares
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -67,19 +65,18 @@ func (auth *Authorize) ServeHTTP(response http.ResponseWriter, request *http.Req
 
 	// make sure that user exists
 	var user database.Users
-	cachedUser, cacheError := cache.Client.Get(
-		request.Context(),
-		cache.CreateKey(cache.KeyPrefixes.Account, uid),
-	).Result()
+	cacheError := cache.Operations.GetUser(uid, user, request.Context())
 	if cacheError != nil {
-		queryError := database.UsersCollection.FindOne(
-			request.Context(),
+		cache.Operations.RemoveUser(uid, request.Context())
+		queryError := database.Operations.GetUser(
 			bson.M{
 				"isDeleted":      false,
 				"setUpCompleted": true,
 				"uid":            uid,
 			},
-		).Decode(&user)
+			user,
+			request.Context(),
+		)
 		if queryError != nil {
 			if errors.Is(queryError, mongo.ErrNoDocuments) {
 				utilities.Response(utilities.ResponseParams{
@@ -98,37 +95,7 @@ func (auth *Authorize) ServeHTTP(response http.ResponseWriter, request *http.Req
 			})
 			return
 		}
-		userBytes, jsonError := json.Marshal(user)
-		if jsonError != nil {
-			utilities.Response(utilities.ResponseParams{
-				Info:     constants.RESPONSE_INFO.InternalServerError,
-				Request:  request,
-				Response: response,
-				Status:   http.StatusInternalServerError,
-			})
-			return
-		}
-		cache.Client.Set(
-			request.Context(),
-			cache.CreateKey(cache.KeyPrefixes.Account, user.UID),
-			string(userBytes),
-			time.Duration(time.Hour)*8,
-		)
-	} else {
-		jsonError := json.Unmarshal([]byte(cachedUser), &user)
-		if jsonError != nil {
-			cache.Client.Del(
-				request.Context(),
-				cache.CreateKey(cache.KeyPrefixes.Account, uid),
-			)
-			utilities.Response(utilities.ResponseParams{
-				Info:     constants.RESPONSE_INFO.InternalServerError,
-				Request:  request,
-				Response: response,
-				Status:   http.StatusInternalServerError,
-			})
-			return
-		}
+		cache.Operations.SaveUser(uid, user, request.Context())
 	}
 
 	auth.handler.ServeHTTP(

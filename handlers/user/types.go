@@ -1,4 +1,4 @@
-package account
+package user
 
 type ChangePasswordRequestPayload struct {
 	NewPassword string `json:"newPassword"`

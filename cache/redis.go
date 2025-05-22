@@ -17,8 +17,8 @@ var Client *redis.Client
 var NilError error = redis.Nil
 
 var KeyPrefixes = KeyPrefixesStruct{
-	Account: "account",
-	File:    "file",
+	File: "file",
+	User: "user",
 }
 
 func Connect() {
@@ -47,6 +47,8 @@ func Connect() {
 		log.Printf("Redis connection failed, retry in %d seconds", i)
 		time.Sleep(time.Duration(i) * time.Second)
 	}
+
+	Operations.Client = Client
 
 	log.Println("Redis connection is ready")
 }

@@ -20,9 +20,13 @@ const METRICS_COLLECTION_NAME string = "metrics"
 const USERS_COLLECTION_NAME string = "users"
 
 var Client *mongo.Client
+
 var Database *mongo.Database
+
 var FilesCollection *mongo.Collection
+
 var MetricsCollection *mongo.Collection
+
 var UsersCollection *mongo.Collection
 
 func Connect() {
