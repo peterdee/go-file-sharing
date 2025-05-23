@@ -57,7 +57,7 @@ func Response(params ResponseParams) {
 		return
 	}
 
-	params.Response.WriteHeader(status)
 	params.Response.Header().Set("Content-Type", "application/json")
+	params.Response.WriteHeader(status)
 	params.Response.Write(json)
 }

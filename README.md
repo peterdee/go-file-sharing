@@ -6,9 +6,9 @@ Stack:
 
 - Golang
 
-- MongoDB (store file information)
+- MongoDB (main storage)
 
-- Redis (cache file information to reduce main database load)
+- Redis (cache)
 
 Features:
 
