@@ -5,13 +5,13 @@ import (
 	"os"
 	"strconv"
 
-	"file-sharing/constants"
-	"file-sharing/database"
-	"file-sharing/utilities"
-
 	"github.com/julyskies/gohelpers"
 	"github.com/nrednav/cuid2"
 	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"file-sharing/constants"
+	"file-sharing/database"
+	"file-sharing/utilities"
 )
 
 func UploadHandler(response http.ResponseWriter, request *http.Request) {
@@ -65,7 +65,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		Views:          0,
 	}
 
-	path := createFilePath(uid)
+	path := utilities.CreateFilePath(uid)
 	destination, fileError := os.Create(path)
 	if fileError != nil {
 		utilities.Response(utilities.ResponseParams{
@@ -88,10 +88,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, insertError := database.FilesCollection.InsertOne(
-		request.Context(),
-		filesRecord,
-	)
+	insertError := database.Operations.InsertFile(filesRecord, request.Context())
 	if insertError != nil {
 		os.Remove(path)
 		utilities.Response(utilities.ResponseParams{
@@ -102,12 +99,9 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		})
 		return
 	}
-	_, insertError = database.MetricsCollection.InsertOne(
-		request.Context(),
-		metricsRecord,
-	)
+	insertError = database.Operations.InsertMetrics(metricsRecord, request.Context())
 	if insertError != nil {
-		database.FilesCollection.DeleteOne(request.Context(), bson.M{"uid": uid})
+		database.Operations.DeleteFile(bson.M{"uid": uid}, request.Context())
 		os.Remove(path)
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,

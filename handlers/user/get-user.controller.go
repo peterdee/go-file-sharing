@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -30,7 +31,6 @@ func GetUserHandler(response http.ResponseWriter, request *http.Request) {
 	var user database.Users
 	cacheError := cache.Operations.GetUser(uid, user, request.Context())
 	if cacheError != nil {
-		cache.Operations.RemoveUser(uid, request.Context())
 		queryError := database.Operations.GetUser(bson.M{"uid": uid}, &user, request.Context())
 		if queryError != nil {
 			if errors.Is(queryError, mongo.ErrNoDocuments) {
@@ -50,13 +50,12 @@ func GetUserHandler(response http.ResponseWriter, request *http.Request) {
 			})
 			return
 		}
+		fmt.Println(user)
 		cache.Operations.SaveUser(uid, user, request.Context())
 	}
 
 	utilities.Response(utilities.ResponseParams{
-		Data: map[string]any{
-			"user": user,
-		},
+		Data:     map[string]any{"user": user},
 		Request:  request,
 		Response: response,
 	})

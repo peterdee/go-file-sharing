@@ -16,6 +16,7 @@ type EnvNames struct {
 type ResponseInfo struct {
 	BadRequest            string
 	FileNotAvailable      string
+	Forbidden             string
 	InternalServerError   string
 	NotFound              string
 	Ok                    string

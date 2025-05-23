@@ -63,11 +63,11 @@ func main() {
 
 	// root mux
 	rootHandlers := http.NewServeMux()
-	rootHandlers.HandleFunc("DELETE /account/{id}", root.DeleteAccountHandler)
-	rootHandlers.HandleFunc("GET /account/{id}", root.GetAccountHandler)
-	rootHandlers.HandleFunc("GET /list", root.ListAccountsHandler)
-	rootHandlers.HandleFunc("PATCH /{id}", root.UpdateAccountHandler)
-	rootHandlers.HandleFunc("POST /", root.CreateAccountHandler)
+	rootHandlers.HandleFunc("DELETE /user/{id}", root.DeleteUserHandler)
+	rootHandlers.HandleFunc("GET /user/{id}", root.GetUserHandler)
+	rootHandlers.HandleFunc("GET /users", root.ListUsersHandler)
+	rootHandlers.HandleFunc("PATCH /user/{id}", root.UpdateUserHandler)
+	rootHandlers.HandleFunc("POST /user", root.CreateUserHandler)
 
 	// user mux
 	userHandlers := http.NewServeMux()

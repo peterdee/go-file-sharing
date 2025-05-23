@@ -62,8 +62,7 @@ func SetUpHandler(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var user database.Users
-	queryError := database.UsersCollection.FindOneAndUpdate(
-		request.Context(),
+	queryError := database.Operations.GetUserAndUpdate(
 		bson.M{
 			"email":          email,
 			"isDeleted":      false,
@@ -76,7 +75,9 @@ func SetUpHandler(response http.ResponseWriter, request *http.Request) {
 				"updatedAt":      gohelpers.MakeTimestampSeconds(),
 			},
 		},
-	).Decode(&user)
+		&user,
+		request.Context(),
+	)
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{

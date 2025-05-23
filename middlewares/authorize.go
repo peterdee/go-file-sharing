@@ -74,7 +74,7 @@ func (auth *Authorize) ServeHTTP(response http.ResponseWriter, request *http.Req
 				"setUpCompleted": true,
 				"uid":            uid,
 			},
-			user,
+			&user,
 			request.Context(),
 		)
 		if queryError != nil {

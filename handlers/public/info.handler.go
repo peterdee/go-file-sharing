@@ -1,7 +1,6 @@
 package public
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
+	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/utilities"
@@ -17,23 +17,15 @@ import (
 
 func InfoHandler(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
-	path := createFilePath(id)
+	path := utilities.CreateFilePath(id)
 
-	var filesRecord database.Files
-
-	cachedFilesRecord, cacheError := getFromCache(id, request.Context())
-	if cacheError == nil {
-		cacheError = json.Unmarshal([]byte(cachedFilesRecord), &filesRecord)
-	}
-
+	var file database.Files
+	cacheError := cache.Operations.GetFile(id, file, request.Context())
 	if cacheError != nil {
-		queryError := database.FilesCollection.FindOne(
-			request.Context(),
-			bson.M{"uid": id},
-		).Decode(&filesRecord)
+		queryError := database.Operations.GetFile(bson.M{"uid": id}, &file, request.Context())
 		if queryError != nil {
 			if errors.Is(queryError, mongo.ErrNoDocuments) {
-				database.MetricsCollection.DeleteOne(request.Context(), bson.M{"uid": id})
+				database.Operations.DeleteMetrics(bson.M{"uid": id}, request.Context())
 				os.Remove(path)
 				utilities.Response(utilities.ResponseParams{
 					Info:     constants.RESPONSE_INFO.NotFound,
@@ -51,13 +43,12 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 			})
 			return
 		}
-		saveToCache(id, filesRecord, request.Context())
+		cache.Operations.SaveFile(id, file, request.Context())
 	}
 
-	var metricsRecord database.Metrics
+	var metrics database.Metrics
 	timestamp := gohelpers.MakeTimestampSeconds()
-	queryError := database.MetricsCollection.FindOneAndUpdate(
-		request.Context(),
+	queryError := database.Operations.GetMetricsAndUpdate(
 		bson.M{"uid": id},
 		bson.M{
 			"$inc": bson.M{"views": 1},
@@ -66,12 +57,14 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 				"updatedAt":  timestamp,
 			},
 		},
-	).Decode(&metricsRecord)
+		&metrics,
+		request.Context(),
+	)
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
-			database.FilesCollection.DeleteOne(request.Context(), bson.M{"uid": id})
+			database.Operations.DeleteFile(bson.M{"uid": id}, request.Context())
 			os.Remove(path)
-			removeFromCache(id, request.Context())
+			cache.Operations.RemoveFile(id, request.Context())
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,
@@ -89,13 +82,13 @@ func InfoHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	metricsRecord.LastViewed = timestamp
-	metricsRecord.Views += 1
+	metrics.LastViewed = timestamp
+	metrics.Views += 1
 
 	utilities.Response(utilities.ResponseParams{
 		Data: map[string]any{
-			"file":  filesRecord,
-			"stats": metricsRecord,
+			"file":  file,
+			"stats": metrics,
 		},
 		Request:  request,
 		Response: response,

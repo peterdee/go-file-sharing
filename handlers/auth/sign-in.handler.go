@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -15,7 +14,7 @@ import (
 )
 
 func SignInHandler(response http.ResponseWriter, request *http.Request) {
-	parsed, parsingError := utilities.BodyParser(request, SetUpRequestPayload{})
+	parsed, parsingError := utilities.BodyParser(request, SignInRequestPayload{})
 	if parsingError != nil {
 		utilities.Response(utilities.ResponseParams{
 			Info:        constants.RESPONSE_INFO.BadRequest,
@@ -51,14 +50,15 @@ func SignInHandler(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var user database.Users
-	queryError := database.UsersCollection.FindOne(
-		request.Context(),
+	queryError := database.Operations.GetUser(
 		bson.M{
 			"email":          email,
 			"isDeleted":      false,
 			"setUpCompleted": true,
 		},
-	).Decode(&user)
+		&user,
+		request.Context(),
+	)
 	if queryError != nil {
 		if errors.Is(queryError, mongo.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
@@ -103,7 +103,6 @@ func SignInHandler(response http.ResponseWriter, request *http.Request) {
 
 	token, tokenError := utilities.CreateJwt(user.UID)
 	if tokenError != nil {
-		fmt.Println(tokenError)
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,
 			Request:  request,

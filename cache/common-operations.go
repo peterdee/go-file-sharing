@@ -49,16 +49,27 @@ func (operations *CommonOperations) saveToCache(
 	return setError
 }
 
+func (operations *CommonOperations) GetFile(
+	uid string,
+	file any,
+	requestContext context.Context,
+) error {
+	return operations.getFromCache(CreateKey(KeyPrefixes.File, uid), file, requestContext)
+}
+
 func (operations *CommonOperations) GetUser(
 	uid string,
 	user any,
 	requestContext context.Context,
 ) error {
-	return operations.getFromCache(
-		CreateKey(KeyPrefixes.User, uid),
-		user,
-		requestContext,
-	)
+	return operations.getFromCache(CreateKey(KeyPrefixes.User, uid), user, requestContext)
+}
+
+func (operations *CommonOperations) RemoveFile(
+	uid string,
+	requestContext context.Context,
+) error {
+	return operations.removeFromCache(CreateKey(KeyPrefixes.File, uid), requestContext)
 }
 
 func (operations *CommonOperations) RemoveUser(
@@ -66,6 +77,19 @@ func (operations *CommonOperations) RemoveUser(
 	requestContext context.Context,
 ) error {
 	return operations.removeFromCache(CreateKey(KeyPrefixes.User, uid), requestContext)
+}
+
+func (operations *CommonOperations) SaveFile(
+	uid string,
+	file any,
+	requestContext context.Context,
+) error {
+	return operations.saveToCache(
+		CreateKey(KeyPrefixes.File, uid),
+		file,
+		defaultExpiration,
+		requestContext,
+	)
 }
 
 func (operations *CommonOperations) SaveUser(
