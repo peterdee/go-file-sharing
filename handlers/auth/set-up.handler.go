@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/julyskies/gohelpers"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"file-sharing/constants"
 	"file-sharing/database"
@@ -61,25 +59,25 @@ func SetUpHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var user database.Users
-	queryError := database.Operations.GetUserAndUpdate(
-		bson.M{
+	var user database.UserModel
+	queryError := database.UserService.FindOneAndUpdate(
+		request.Context(),
+		map[string]any{
 			"email":          email,
 			"isDeleted":      false,
 			"setUpCompleted": false,
 		},
-		bson.M{
-			"$set": bson.M{
+		map[string]any{
+			"$set": map[string]any{
 				"passwordHash":   passwordHash,
 				"setUpCompleted": true,
 				"updatedAt":      gohelpers.MakeTimestampSeconds(),
 			},
 		},
 		&user,
-		request.Context(),
 	)
 	if queryError != nil {
-		if errors.Is(queryError, mongo.ErrNoDocuments) {
+		if errors.Is(queryError, database.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
 				Info:        constants.RESPONSE_INFO.NotFound,
 				InfoDetails: "Account not found",

@@ -8,9 +8,6 @@ import (
 	"file-sharing/constants"
 	"file-sharing/database"
 	"file-sharing/utilities"
-
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func SignInHandler(response http.ResponseWriter, request *http.Request) {
@@ -49,18 +46,18 @@ func SignInHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var user database.Users
-	queryError := database.Operations.GetUser(
-		bson.M{
+	var user database.UserModel
+	queryError := database.UserService.FindOne(
+		request.Context(),
+		map[string]any{
 			"email":          email,
 			"isDeleted":      false,
 			"setUpCompleted": true,
 		},
 		&user,
-		request.Context(),
 	)
 	if queryError != nil {
-		if errors.Is(queryError, mongo.ErrNoDocuments) {
+		if errors.Is(queryError, database.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.Unauthorized,
 				Request:  request,
@@ -101,7 +98,7 @@ func SignInHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	token, tokenError := utilities.CreateJwt(user.UID)
+	token, tokenError := utilities.CreateJwt(user.Uid)
 	if tokenError != nil {
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,

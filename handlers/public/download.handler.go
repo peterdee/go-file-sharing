@@ -7,8 +7,6 @@ import (
 	"os"
 
 	"github.com/julyskies/gohelpers"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"file-sharing/cache"
 	"file-sharing/constants"
@@ -17,16 +15,16 @@ import (
 )
 
 func DownloadHandler(response http.ResponseWriter, request *http.Request) {
-	id := request.PathValue("id")
-	path := utilities.CreateFilePath(id)
+	uid := request.PathValue("id")
+	path := utilities.CreateFilePath(uid)
 
-	var file database.Files
-	cacheError := cache.Operations.GetFile(id, file, request.Context())
+	var file database.FileModel
+	cacheError := cache.FileService.Get(request.Context(), uid, &file)
 	if cacheError != nil {
-		queryError := database.Operations.GetFile(bson.M{"uid": id}, &file, request.Context())
+		queryError := database.FileService.FindOneByUid(request.Context(), uid, &file)
 		if queryError != nil {
-			if errors.Is(queryError, mongo.ErrNoDocuments) {
-				database.Operations.DeleteMetrics(bson.M{"uid": id}, request.Context())
+			if errors.Is(queryError, database.ErrNoDocuments) {
+				database.MetricsService.DeleteOneByUid(request.Context(), uid)
 				os.Remove(path)
 				utilities.Response(utilities.ResponseParams{
 					Info:     constants.RESPONSE_INFO.NotFound,
@@ -44,7 +42,7 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 			})
 			return
 		}
-		cache.Operations.SaveFile(id, file, request.Context())
+		cache.FileService.Set(request.Context(), file)
 	}
 
 	if file.IsDeleted {
@@ -57,25 +55,25 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var metrics database.Metrics
+	var metrics database.MetricsModel
 	timestamp := gohelpers.MakeTimestampSeconds()
-	queryError := database.Operations.GetMetricsAndUpdate(
-		bson.M{"uid": id},
-		bson.M{
-			"$inc": bson.M{"downloads": 1},
-			"$set": bson.M{
+	queryError := database.MetricsService.FindOneAndUpdate(
+		request.Context(),
+		map[string]any{"uid": uid},
+		map[string]any{
+			"$inc": map[string]any{"downloads": 1},
+			"$set": map[string]any{
 				"lastDownloaded": timestamp,
 				"updatedAt":      timestamp,
 			},
 		},
 		&metrics,
-		request.Context(),
 	)
 	if queryError != nil {
-		if errors.Is(queryError, mongo.ErrNoDocuments) {
-			database.Operations.DeleteFile(bson.M{"uid": id}, request.Context())
+		if errors.Is(queryError, database.ErrNoDocuments) {
+			cache.FileService.Del(request.Context(), uid)
+			database.FileService.DeleteOneByUid(request.Context(), uid)
 			os.Remove(path)
-			cache.Operations.RemoveFile(id, request.Context())
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,
@@ -96,9 +94,9 @@ func DownloadHandler(response http.ResponseWriter, request *http.Request) {
 	fileData, fileError := os.Open(path)
 	if fileError != nil {
 		if errors.Is(fileError, os.ErrNotExist) {
-			database.Operations.DeleteFile(bson.M{"uid": id}, request.Context())
-			database.Operations.DeleteMetrics(bson.M{"uid": id}, request.Context())
-			cache.Operations.RemoveFile(id, request.Context())
+			cache.FileService.Del(request.Context(), uid)
+			database.FileService.DeleteOneByUid(request.Context(), uid)
+			database.MetricsService.DeleteOneByUid(request.Context(), uid)
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.NotFound,
 				Request:  request,

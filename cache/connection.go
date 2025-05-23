@@ -21,6 +21,8 @@ var KeyPrefixes = KeyPrefixesStruct{
 	User: "user",
 }
 
+const defaultExpiration time.Duration = time.Duration(time.Hour) * 8
+
 func Connect() {
 	redisHost := utilities.GetEnv(
 		constants.ENV_NAMES.RedisHost,
@@ -48,7 +50,8 @@ func Connect() {
 		time.Sleep(time.Duration(i) * time.Second)
 	}
 
-	Operations.Client = Client
+	FileService.New(Client, KeyPrefixes.File)
+	UserService.New(Client, KeyPrefixes.User)
 
 	log.Println("Redis connection is ready")
 }

@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/julyskies/gohelpers"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"file-sharing/constants"
 	"file-sharing/database"
@@ -63,10 +61,10 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	var user database.Users
-	queryError := database.Operations.GetUser(bson.M{"uid": uid}, &user, request.Context())
+	var user database.UserModel
+	queryError := database.UserService.FindOneByUid(request.Context(), uid, &user)
 	if queryError != nil {
-		if errors.Is(queryError, mongo.ErrNoDocuments) {
+		if errors.Is(queryError, database.ErrNoDocuments) {
 			utilities.Response(utilities.ResponseParams{
 				Info:     constants.RESPONSE_INFO.Unauthorized,
 				Request:  request,
@@ -115,15 +113,15 @@ func ChangePasswordHandler(response http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	queryError = database.Operations.UpdateUser(
-		bson.M{"uid": uid},
-		bson.M{
-			"$set": bson.M{
+	queryError = database.UserService.UpdateOne(
+		request.Context(),
+		map[string]any{"uid": uid},
+		map[string]any{
+			"$set": map[string]any{
 				"passwordHash": newPasswordHash,
 				"updatedAt":    gohelpers.MakeTimestampSeconds(),
 			},
 		},
-		request.Context(),
 	)
 	if queryError != nil {
 		utilities.Response(utilities.ResponseParams{

@@ -4,9 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-
 	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
@@ -28,13 +25,13 @@ func GetUserHandler(response http.ResponseWriter, request *http.Request) {
 
 	uid := request.PathValue("id")
 
-	var user database.Users
-	cacheError := cache.Operations.GetUser(uid, &user, request.Context())
+	var user database.UserModel
+	cacheError := cache.UserService.Get(request.Context(), uid, &user)
 	if cacheError != nil {
-		cache.Operations.RemoveUser(uid, request.Context())
-		queryError := database.Operations.GetUser(bson.M{"uid": uid}, &user, request.Context())
+		cache.UserService.Del(request.Context(), uid)
+		queryError := database.UserService.FindOneByUid(request.Context(), uid, &user)
 		if queryError != nil {
-			if errors.Is(queryError, mongo.ErrNoDocuments) {
+			if errors.Is(queryError, database.ErrNoDocuments) {
 				utilities.Response(utilities.ResponseParams{
 					Info:        constants.RESPONSE_INFO.NotFound,
 					InfoDetails: "User account not found",
@@ -52,7 +49,7 @@ func GetUserHandler(response http.ResponseWriter, request *http.Request) {
 			})
 			return
 		}
-		cache.Operations.SaveUser(uid, user, request.Context())
+		cache.UserService.Set(request.Context(), user)
 	}
 
 	utilities.Response(utilities.ResponseParams{

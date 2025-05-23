@@ -7,7 +7,6 @@ import (
 
 	"github.com/julyskies/gohelpers"
 	"github.com/nrednav/cuid2"
-	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"file-sharing/constants"
 	"file-sharing/database"
@@ -46,22 +45,24 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 
 	timestamp := gohelpers.MakeTimestampSeconds()
 	uid := cuid2.Generate()
-	filesRecord := database.Files{
+	fileRecord := database.FileModel{
 		CreatedAt:    timestamp,
 		DeletedAt:    0,
 		IsDeleted:    false,
 		OriginalName: handler.Filename,
 		Size:         handler.Size,
-		UID:          uid,
+		Uid:          uid,
+		UpdatedAt:    timestamp,
 	}
-	metricsRecord := database.Metrics{
+	metricsRecord := database.MetricsModel{
 		CreatedAt:      timestamp,
 		DeletedAt:      0,
 		Downloads:      0,
 		IsDeleted:      false,
 		LastDownloaded: timestamp,
 		LastViewed:     timestamp,
-		UID:            uid,
+		Uid:            uid,
+		UpdatedAt:      timestamp,
 		Views:          0,
 	}
 
@@ -88,7 +89,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	insertError := database.Operations.InsertFile(filesRecord, request.Context())
+	insertError := database.FileService.InsertOne(request.Context(), fileRecord)
 	if insertError != nil {
 		os.Remove(path)
 		utilities.Response(utilities.ResponseParams{
@@ -99,9 +100,9 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 		})
 		return
 	}
-	insertError = database.Operations.InsertMetrics(metricsRecord, request.Context())
+	insertError = database.MetricsService.InsertOne(request.Context(), metricsRecord)
 	if insertError != nil {
-		database.Operations.DeleteFile(bson.M{"uid": uid}, request.Context())
+		database.FileService.DeleteOneByUid(request.Context(), uid)
 		os.Remove(path)
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,
@@ -113,9 +114,7 @@ func UploadHandler(response http.ResponseWriter, request *http.Request) {
 	}
 
 	utilities.Response(utilities.ResponseParams{
-		Data: map[string]string{
-			"id": uid,
-		},
+		Data:     map[string]string{"id": uid},
 		Request:  request,
 		Response: response,
 	})

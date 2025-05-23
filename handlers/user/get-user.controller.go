@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-
 	"file-sharing/cache"
 	"file-sharing/constants"
 	"file-sharing/database"
@@ -28,12 +25,13 @@ func GetUserHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var user database.Users
-	cacheError := cache.Operations.GetUser(uid, user, request.Context())
+	var user database.UserModel
+	cacheError := cache.UserService.Get(request.Context(), uid, &user)
 	if cacheError != nil {
-		queryError := database.Operations.GetUser(bson.M{"uid": uid}, &user, request.Context())
+		queryError := database.UserService.FindOneByUid(request.Context(), uid, &user)
+		fmt.Println(queryError)
 		if queryError != nil {
-			if errors.Is(queryError, mongo.ErrNoDocuments) {
+			if errors.Is(queryError, database.ErrNoDocuments) {
 				utilities.Response(utilities.ResponseParams{
 					Info:     constants.RESPONSE_INFO.Unauthorized,
 					Request:  request,
@@ -51,7 +49,7 @@ func GetUserHandler(response http.ResponseWriter, request *http.Request) {
 			return
 		}
 		fmt.Println(user)
-		cache.Operations.SaveUser(uid, user, request.Context())
+		cache.UserService.Set(request.Context(), user)
 	}
 
 	utilities.Response(utilities.ResponseParams{

@@ -6,8 +6,6 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"file-sharing/cache"
 	"file-sharing/constants"
@@ -64,21 +62,21 @@ func (auth *Authorize) ServeHTTP(response http.ResponseWriter, request *http.Req
 	}
 
 	// make sure that user exists
-	var user database.Users
-	cacheError := cache.Operations.GetUser(uid, user, request.Context())
+	var user database.UserModel
+	cacheError := cache.UserService.Get(request.Context(), uid, &user)
 	if cacheError != nil {
-		cache.Operations.RemoveUser(uid, request.Context())
-		queryError := database.Operations.GetUser(
-			bson.M{
+		cache.UserService.Del(request.Context(), uid)
+		queryError := database.UserService.FindOne(
+			request.Context(),
+			map[string]any{
 				"isDeleted":      false,
 				"setUpCompleted": true,
 				"uid":            uid,
 			},
 			&user,
-			request.Context(),
 		)
 		if queryError != nil {
-			if errors.Is(queryError, mongo.ErrNoDocuments) {
+			if errors.Is(queryError, database.ErrNoDocuments) {
 				utilities.Response(utilities.ResponseParams{
 					Info:     constants.RESPONSE_INFO.Unauthorized,
 					Request:  request,
@@ -95,7 +93,7 @@ func (auth *Authorize) ServeHTTP(response http.ResponseWriter, request *http.Req
 			})
 			return
 		}
-		cache.Operations.SaveUser(uid, user, request.Context())
+		cache.UserService.Set(request.Context(), user)
 	}
 
 	auth.handler.ServeHTTP(

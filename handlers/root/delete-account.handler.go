@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/julyskies/gohelpers"
-	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"file-sharing/cache"
 	"file-sharing/constants"
@@ -37,22 +36,22 @@ func DeleteUserHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	cache.Operations.RemoveUser(uid, request.Context())
+	cache.UserService.Del(request.Context(), uid)
 	timestamp := gohelpers.MakeTimestampSeconds()
-	database.Operations.UpdateUser(
-		bson.M{
+	database.UserService.UpdateOne(
+		request.Context(),
+		map[string]any{
 			"isDeleted":      false,
 			"setUpCompleted": true,
 			"uid":            uid,
 		},
-		bson.M{
-			"$set": bson.M{
+		map[string]any{
+			"$set": map[string]any{
 				"deletedAt": timestamp,
 				"isDeleted": true,
 				"updatedAt": timestamp,
 			},
 		},
-		request.Context(),
 	)
 
 	utilities.Response(utilities.ResponseParams{

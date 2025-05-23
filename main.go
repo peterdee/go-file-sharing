@@ -71,7 +71,7 @@ func main() {
 
 	// user mux
 	userHandlers := http.NewServeMux()
-	userHandlers.HandleFunc("GET /", user.GetUserHandler)
+	userHandlers.HandleFunc("GET /profile", user.GetUserHandler)
 	userHandlers.HandleFunc("PATCH /password", user.ChangePasswordHandler)
 
 	port := utilities.GetEnv(constants.ENV_NAMES.Port, constants.DEFAULT_PORT)
@@ -83,10 +83,6 @@ func main() {
 	log.Printf("Server is running on port %s", port)
 
 	combineMux := http.NewServeMux()
-	combineMux.Handle(
-		"/api/user/",
-		http.StripPrefix("/api/user", middlewares.WithAuthorization(userHandlers)),
-	)
 	combineMux.Handle(
 		"/api/auth/",
 		http.StripPrefix("/api/auth", authHandlers),
@@ -102,6 +98,10 @@ func main() {
 	combineMux.Handle(
 		"/api/root/",
 		http.StripPrefix("/api/root", middlewares.WithAuthorization(rootHandlers)),
+	)
+	combineMux.Handle(
+		"/api/user/",
+		http.StripPrefix("/api/user", middlewares.WithAuthorization(userHandlers)),
 	)
 
 	serveError := http.Serve(listener, middlewares.WithLogger(combineMux))

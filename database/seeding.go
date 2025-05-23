@@ -8,8 +8,6 @@ import (
 
 	"github.com/julyskies/gohelpers"
 	"github.com/nrednav/cuid2"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"file-sharing/constants"
 	"file-sharing/utilities"
@@ -21,19 +19,18 @@ func seeding() {
 		log.Fatalf("missing required %s environment variable", constants.ENV_NAMES.RootEmail)
 	}
 
-	var rootUser Users
-	queryError := UsersCollection.FindOne(
+	var rootUser UserModel
+	queryError := UserService.FindOne(
 		context.Background(),
-		bson.M{
-			"email": rootEmail,
-		},
-	).Decode(&rootUser)
+		map[string]any{"email": rootEmail},
+		&rootUser,
+	)
 	if queryError != nil {
-		if errors.Is(queryError, mongo.ErrNoDocuments) {
+		if errors.Is(queryError, ErrNoDocuments) {
 			timestamp := gohelpers.MakeTimestampSeconds()
-			_, queryError = UsersCollection.InsertOne(
+			queryError := UserService.InsertOne(
 				context.Background(),
-				Users{
+				UserModel{
 					CreatedAt:      timestamp,
 					DeletedAt:      0,
 					Email:          strings.ToLower(strings.Trim(rootEmail, " ")),
@@ -41,7 +38,7 @@ func seeding() {
 					PasswordHash:   "",
 					Role:           constants.ROLES.Root,
 					SetUpCompleted: false,
-					UID:            cuid2.Generate(),
+					Uid:            cuid2.Generate(),
 					UpdatedAt:      timestamp,
 				},
 			)
