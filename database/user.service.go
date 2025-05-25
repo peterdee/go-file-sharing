@@ -5,6 +5,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+
+	"file-sharing/utilities"
 )
 
 const userCollectionName string = "user"
@@ -70,6 +72,14 @@ func (service *userService) FindOneByUid(
 	destination *UserModel,
 ) error {
 	return service.collection.FindOne(operationContext, bson.M{"uid": uid}).Decode(destination)
+}
+
+func (service *userService) FindPaginated(
+	operationContext context.Context,
+	pagination utilities.PaginationData,
+	destination *[]UserModel,
+) error {
+
 }
 
 func (service *userService) InsertOne(

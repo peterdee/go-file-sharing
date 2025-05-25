@@ -13,8 +13,8 @@ import (
 )
 
 func DeleteUserHandler(response http.ResponseWriter, request *http.Request) {
-	userData := middlewares.GetUserDataFromRequestContext(request.Context())
-	if userData.Role != constants.ROLES.Root {
+	authData := middlewares.GetUserDataFromRequestContext(request.Context())
+	if authData.Role != constants.ROLES.Root {
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.Unauthorized,
 			Request:  request,
@@ -25,7 +25,7 @@ func DeleteUserHandler(response http.ResponseWriter, request *http.Request) {
 	}
 
 	uid := request.PathValue("id")
-	if userData.Uid == uid {
+	if authData.Uid == uid {
 		utilities.Response(utilities.ResponseParams{
 			Info:        constants.RESPONSE_INFO.Forbidden,
 			InfoDetails: "Cannot delete own account",

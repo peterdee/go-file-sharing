@@ -15,8 +15,8 @@ import (
 )
 
 func CreateUserHandler(response http.ResponseWriter, request *http.Request) {
-	userData := middlewares.GetUserDataFromRequestContext(request.Context())
-	if userData.Role != constants.ROLES.Root {
+	authData := middlewares.GetUserDataFromRequestContext(request.Context())
+	if authData.Role != constants.ROLES.Root {
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.Unauthorized,
 			Request:  request,

@@ -12,8 +12,8 @@ import (
 )
 
 func GetUserHandler(response http.ResponseWriter, request *http.Request) {
-	userData := middlewares.GetUserDataFromRequestContext(request.Context())
-	if userData.Role != constants.ROLES.Root {
+	authData := middlewares.GetUserDataFromRequestContext(request.Context())
+	if authData.Role != constants.ROLES.Root {
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.Unauthorized,
 			Request:  request,
@@ -28,7 +28,6 @@ func GetUserHandler(response http.ResponseWriter, request *http.Request) {
 	var user database.UserModel
 	cacheError := cache.UserService.Get(request.Context(), uid, &user)
 	if cacheError != nil {
-		cache.UserService.Del(request.Context(), uid)
 		queryError := database.UserService.FindOneByUid(request.Context(), uid, &user)
 		if queryError != nil {
 			if errors.Is(queryError, database.ErrNoDocuments) {
