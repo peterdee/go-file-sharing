@@ -5,6 +5,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"file-sharing/utilities"
 )
@@ -76,10 +77,25 @@ func (service *userService) FindOneByUid(
 
 func (service *userService) FindPaginated(
 	operationContext context.Context,
+	filter map[string]any,
 	pagination utilities.PaginationData,
 	destination *[]UserModel,
-) error {
+) (int64, error) {
+	count, queryError := service.collection.CountDocuments(operationContext, filter)
+	if queryError != nil {
+		return 0, queryError
+	}
 
+	queryOptions := options.Find()
+	queryOptions.SetLimit(int64(pagination.Limit))
+	queryOptions.SetSkip(int64(pagination.Offset))
+	cursor, cursorError := service.collection.Find(operationContext, filter, queryOptions)
+	if cursorError != nil {
+		return 0, cursorError
+	}
+
+	defer cursor.Close(context.Background())
+	return count, cursor.All(context.Background(), destination)
 }
 
 func (service *userService) InsertOne(
