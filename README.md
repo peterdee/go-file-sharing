@@ -10,15 +10,43 @@ Stack:
 
 - Redis (cache)
 
-Features:
+Public features:
 
 - upload files (file size cap is set via environment variable)
 
-- get file info via file ID
+- get file info
 
-- download file via file ID
+- download file
 
 - files are stored on the disk
+
+- files are automatically marked as deleted if their view and download stats were not updated for the past 14 days
+
+Manager features:
+
+- view file list (paginated)
+
+- view single file
+
+- delete file (mark as deleted)
+
+- get own user profile
+
+- change password
+
+Root user features:
+
+- create user (root user or manager)
+
+- view user list (paginated)
+
+- view single user
+
+- update user data
+
+- delete user (mark as deleted)
+
+- all of the manager features are also available
 
 ### Deploy
 
