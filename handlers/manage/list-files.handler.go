@@ -1,7 +1,6 @@
 package manage
 
 import (
-	"fmt"
 	"net/http"
 
 	"file-sharing/constants"
@@ -52,7 +51,6 @@ func ListFilesHandler(response http.ResponseWriter, request *http.Request) {
 		&metrics,
 	)
 	if queryError != nil {
-		fmt.Println(queryError)
 		utilities.Response(utilities.ResponseParams{
 			Info:     constants.RESPONSE_INFO.InternalServerError,
 			Request:  request,
