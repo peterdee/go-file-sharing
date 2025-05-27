@@ -22,9 +22,12 @@ import (
 )
 
 func main() {
-	envError := godotenv.Load()
-	if envError != nil {
-		log.Fatal(envError)
+	isDockerImage := utilities.GetEnv(constants.ENV_NAMES.IsDockerImage)
+	if isDockerImage == "" || isDockerImage != "true" {
+		envError := godotenv.Load()
+		if envError != nil {
+			log.Fatal(envError)
+		}
 	}
 
 	uploadsDirectoryName := utilities.GetEnv(

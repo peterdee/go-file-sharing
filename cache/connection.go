@@ -28,10 +28,14 @@ func Connect() {
 		constants.ENV_NAMES.RedisHost,
 		constants.DEFAULT_REDIS_HOST,
 	)
+	redisPort := utilities.GetEnv(
+		constants.ENV_NAMES.RedisPort,
+		constants.DEFAULT_REDIS_PORT,
+	)
 	redisPassword := utilities.GetEnv(constants.ENV_NAMES.RedisPassword)
 
 	Client = redis.NewClient(&redis.Options{
-		Addr:     redisHost,
+		Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
 		Password: redisPassword,
 		DB:       0,
 	})

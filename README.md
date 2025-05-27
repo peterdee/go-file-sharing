@@ -74,6 +74,28 @@ Alternatively can be launched with [AIR](https://github.com/air-verse/air)
 
 Server will be available at http://localhost:9000
 
+### Launch with Docker
+
+Build server application separately:
+
+```shell script
+docker build -t server:latest .
+```
+
+Run server application separately:
+
+```shell script
+docker run server:latest
+```
+
+Launch all of the services:
+
+```shell script
+dokcer compose up
+```
+
+Server will be available at http://localhost:9000
+
 ### License
 
 [MIT](./LICENSE.md)

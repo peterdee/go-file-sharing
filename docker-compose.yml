@@ -1,0 +1,51 @@
+services:
+  server:
+    build:
+      dockerfile: ./Dockerfile
+    container_name: server
+    env_file:
+      - ./.env
+    environment:
+      - MAX_FILE_SIZE_BYTES=${MAX_FILE_SIZE_BYTES}
+      - UPLOADS_DIRECTORY_NAME=${UPLOADS_DIRECTORY_NAME}
+      - PORT=9000
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+      - DATABASE_CONNECTION_STRING=mongodb://mongodbase:27017
+      - DATABASE_NAME=${DATABASE_NAME}
+      - JWT_EXPIRATION_SECONDS=${JWT_EXPIRATION_SECONDS}
+      - JWT_SECRET=${JWT_SECRET}
+      - ROOT_EMAIL=${ROOT_EMAIL}
+      - IS_DOCKER_IMAGE=true
+    depends_on:
+      - mongodbase
+      - redis
+    networks:
+      - backend
+    ports:
+      - "9000:9000"
+
+  mongodbase:
+    image: mongo:latest
+    container_name: mongodbase
+    networks:
+      - backend
+    ports: 
+      - 27017:27017
+    restart: always
+
+  redis:
+    image: redis:latest
+    command: --port ${REDIS_PORT}
+    container_name: redis
+    env_file:
+      - ./.env
+    networks:
+      - backend
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    restart: always
+
+networks:
+  backend:
+    driver: bridge

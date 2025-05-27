@@ -3,12 +3,14 @@ package constants
 type EnvNames struct {
 	DatabaseConnectionString string
 	DatabaseName             string
+	IsDockerImage            string
 	JwtExpirationSeconds     string
 	JwtSectet                string
 	MaxFileSizeBytes         string
 	Port                     string
 	RedisHost                string
 	RedisPassword            string
+	RedisPort                string
 	RootEmail                string
 	UplaodsDirectoryName     string
 }
